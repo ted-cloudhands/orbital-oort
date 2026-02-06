@@ -1092,12 +1092,12 @@ body {
 }
 
 .mic-button:hover {
-    transform: translateX(-50%) scale(1.05);
+    transform: translate(-50%, -50%) scale(1.05);
     box-shadow: 0 15px 35px rgba(99, 102, 241, 0.6);
 }
 
 .mic-button:active {
-    transform: translateX(-50%) scale(0.95);
+    transform: translate(-50%, -50%) scale(0.95);
 }
 
 .mic-button.listening {
