@@ -1,13 +1,20 @@
 :root {
-    --bg-dark: #0f172a;
-    --game-bg: #1e293b;
-    --glass-surface: rgba(15, 23, 42, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --accent-gold: #fbbf24;
-    --accent-primary: #8b5cf6;
-    --accent-secondary: #ec4899;
+    /* Deep Purple Theme */
+    --bg-dark: #2e1065;
+    /* very dark purple */
+    --game-bg: #4c1d95;
+    /* deep violet */
+    --glass-surface: rgba(46, 16, 101, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --accent-gold: #f59e0b;
+    /* amber-500 */
+    --accent-primary: #a78bfa;
+    /* violet-400 */
+    --accent-secondary: #f472b6;
+    /* pink-400 */
     --text-main: #f8fafc;
-    --text-muted: #94a3b8;
+    --text-muted: #cbd5e1;
+    /* slate-300 */
     --font-family: 'Outfit', sans-serif;
 }
 
@@ -19,7 +26,8 @@
 
 body {
     font-family: var(--font-family);
-    background: radial-gradient(circle at center, #1e3a8a 0%, #0f172a 100%);
+    /* Deep, rich purple gradient */
+    background: radial-gradient(circle at center, #581c87 0%, #170536 100%);
     color: var(--text-main);
     overflow: hidden;
     height: 100vh;
@@ -35,7 +43,7 @@ body {
     height: 100%;
     z-index: -1;
     background:
-        radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.15), transparent 50%),
+        radial-gradient(circle at 20% 20%, rgba(167, 139, 250, 0.15), transparent 50%),
         radial-gradient(circle at 80% 80%, rgba(251, 191, 36, 0.1), transparent 50%);
     filter: blur(80px);
 }
@@ -54,13 +62,13 @@ body {
     top: 0;
     height: 100%;
     width: 300px;
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(15px);
+    background: linear-gradient(to bottom, rgba(30, 2, 60, 0.98), rgba(46, 16, 101, 0.98));
+    backdrop-filter: blur(25px);
     z-index: 1000;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     transform: translateX(-100%);
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 10px 0 40px rgba(0, 0, 0, 0.7);
+    box-shadow: 10px 0 50px rgba(0, 0, 0, 0.6);
     display: flex;
     flex-direction: column;
 }
@@ -75,9 +83,9 @@ body {
     top: 1.5rem;
     left: 1.5rem;
     z-index: 900;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(46, 16, 101, 0.3);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: white;
     width: 50px;
     height: 50px;
@@ -87,11 +95,12 @@ body {
     align-items: center;
     justify-content: center;
     transition: all 0.3s;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(46, 16, 101, 0.5);
+    border-color: rgba(255, 255, 255, 0.3);
     transform: scale(1.05);
 }
 
@@ -124,7 +133,8 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+    /* Richer purple gradient */
+    background: radial-gradient(circle at center, #4c1d95 0%, #1e1b4b 100%);
     z-index: 2000;
     display: flex;
     justify-content: center;
@@ -137,9 +147,45 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.25rem;
+    gap: 1.5rem;
+    /* Increased gap */
     max-width: 550px;
-    padding: 1.5rem;
+    padding: 2rem;
+    position: relative;
+    /* Context for children if needed */
+}
+
+/* Music Toggle Re-integrated */
+.music-toggle-btn {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    /* Reset layout generic styles */
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-muted);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    /* Override flex behavior from before if any */
+    margin: 0;
+    align-self: auto;
+}
+
+.music-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.music-toggle-btn.playing {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+    background: rgba(251, 191, 36, 0.1);
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
 }
 
 /* Start Logo specific positioning if needed, but classes will handle the look */
@@ -295,9 +341,9 @@ body {
 .difficulty-options {
     display: flex;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.25rem;
     margin-bottom: 1rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .diff-btn {
@@ -378,8 +424,19 @@ body {
 }
 
 /* Shift scoreboard if needed (it is on right, but keep HUD balanced) */
-.sidebar.open~.content-area .feud-scoreboard {
+/* .sidebar.open~.content-area .feud-scoreboard {
     right: 2rem;
+} */
+/* Removed as scoreboard is now in flow */
+
+.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    /* Prevent scroll */
 }
 
 /* -------------------------------------------------------------------------- */
@@ -434,16 +491,18 @@ body {
 
 /* Container specific adjustments */
 .game-logo {
-    position: absolute;
-    top: 1rem;
-    left: 4rem;
-    /* Moved from 50% to left */
-    transform: rotate(-2deg);
+    position: relative;
+    /* Changed from absolute */
+    top: auto;
+    left: auto;
+    /* transform: rotate(-2deg); */
+    /* Keep rotation if desired, but check layout */
     text-align: left;
-    /* Left align text */
     z-index: 50;
     pointer-events: none;
     filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.5));
+    flex-shrink: 0;
+    /* Don't shrink logo */
 }
 
 @keyframes float-logo {
@@ -470,14 +529,20 @@ body {
 
 .game-header {
     width: 100%;
-    height: 180px;
+    /* height: 180px; */
+    /* Auto height to fit content */
+    min-height: 180px;
     display: flex;
-    justify-content: center;
-    /* Question remains centered */
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
+    /* Align to top to handle different heights */
+    padding: 2rem 3rem 1rem 7rem;
+    /* Add padding for spacing */
     position: relative;
     margin-bottom: 0;
     z-index: 10;
+    gap: 2rem;
+    /* Spacing between header elements */
 }
 
 /* Dim Sum Decor */
@@ -689,7 +754,10 @@ body {
 /* 2. Question Display (Centered) */
 .question-display {
     text-align: center;
-    max-width: 60%;
+    /* max-width: 60%; */
+    /* Let flex handle width */
+    flex: 1;
+    /* Take available space */
     background: var(--glass-surface);
     padding: 1.5rem 3rem;
     border-radius: 24px;
@@ -698,6 +766,8 @@ body {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     transform: perspective(1000px) rotateX(5deg);
     /* Slight 3D tilt */
+    margin-top: 10px;
+    /* Align slightly down if needed */
 }
 
 #question-text {
@@ -716,12 +786,14 @@ body {
     opacity: 0.9;
 }
 
-/* 3. Scoreboard (Absolute Right) */
+/* 3. Scoreboard (Relative Right) */
 .feud-scoreboard {
-    position: absolute;
-    right: 2rem;
-    top: 50%;
-    transform: translateY(-50%);
+    position: relative;
+    /* Changed from absolute */
+    right: auto;
+    top: auto;
+    transform: none;
+    /* Remove centering transform */
     background: linear-gradient(135deg, #111, #222);
     border: 3px solid #444;
     border-radius: 12px;
@@ -731,24 +803,16 @@ body {
         /* Outer ring */
         0 10px 30px rgba(0, 0, 0, 0.5),
         inset 0 0 20px rgba(0, 0, 0, 0.8);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 160px;
-}
-
-.score-label {
-    font-size: 0.75rem;
-    color: #666;
-    letter-spacing: 3px;
-    margin-bottom: 5px;
-    font-weight: 800;
-    text-transform: uppercase;
+    margin-top: 10px;
+    /* Align */
+    flex-shrink: 0;
+    /* Keep size */
 }
 
 .score-digits.total-score-display {
     font-family: 'Courier New', monospace;
-    font-size: 3.5rem;
+    font-size: 2.5rem;
+    /* Reduced from 3.5rem to prevent overlap */
     font-weight: 900;
     color: var(--accent-gold);
     text-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
@@ -760,6 +824,8 @@ body {
     width: 100%;
     text-align: center;
     letter-spacing: 2px;
+    margin-top: 5px;
+    /* Add spacing */
 }
 
 /* -------------------------------------------------------------------------- */
@@ -769,20 +835,31 @@ body {
     flex: 1;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-    padding: 1rem 4rem;
+    gap: 2rem;
+    /* Increased gap */
+    padding: 1rem 2rem 1rem 2rem;
+    /* Reduced horizontal padding */
+    /* Added bottom padding for footer space */
     width: 100%;
-    max-width: 1600px;
+    max-width: none;
+    /* Full width */
+    /* Slightly tighter max width */
     margin: 0 auto;
-    align-content: center;
-    /* Center vertically in remaining space */
+    align-content: stretch;
+    /* Stretch to fill vertical space */
+    grid-template-rows: repeat(2, 1fr);
+    /* Force 2 equal rows */
+    /* Don't stretch vertically weirdly */
     perspective: 1200px;
     /* Enable 3D space */
 }
 
 .card-slot {
-    height: 100px;
-    /* Taller slots */
+    min-height: 160px;
+    /* Increased from 100px */
+    height: 100%;
+    /* Fill the grid cell */
+    /* Allow growth */
     position: relative;
     transform-style: preserve-3d;
 }
@@ -800,9 +877,13 @@ body {
 }
 
 .answer-card {
-    position: absolute;
+    position: relative;
+    /* Changed from absolute to flow naturally in slot if needed, but keeping relative allows height control */
     width: 100%;
-    height: 100%;
+    min-height: 100%;
+    /* Fill slot */
+    /* height: 100%; */
+    /* Let content dictate if larger */
 
     /* 3D Box Look */
     background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
@@ -1004,9 +1085,9 @@ body {
 
     position: absolute;
     left: 50%;
-    top: -20px;
-    /* Pop out of top */
-    transform: translateX(-50%);
+    top: 50%;
+    /* Vertically centered */
+    transform: translate(-50%, -50%);
     z-index: 100;
 }
 
@@ -1177,12 +1258,14 @@ input:checked+.slider:before {
     display: flex;
     align-items: center;
     gap: 0.8rem;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .sidebar-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateX(5px);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px) scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar-btn.active {
@@ -1418,4 +1501,95 @@ input:checked+.slider:before {
     font-weight: bold;
     display: block;
     margin-top: 0.5rem;
+}
+
+/* Sidebar Branding Refinements */
+.brand {
+    padding: 2rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.sidebar-logo {
+    transform: scale(0.8);
+    /* Scale down slightly for sidebar */
+    margin-bottom: 0.5rem;
+}
+
+.sidebar-logo .logo-main {
+    font-size: 2.5rem;
+    /* Smaller than main header */
+    white-space: nowrap;
+}
+
+.score-box {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.score-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-bottom: 0.25rem;
+}
+
+.total-score-display {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--accent-gold);
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+}
+
+/* Sidebar List Styling */
+.topics-list-container {
+    padding: 1.5rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.topics-list-container h3 {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
+}
+
+/* Refined Modal Styles (Moving from inline) */
+.summary-modal {
+    background: rgba(30, 2, 60, 0.95);
+    border: 1px solid var(--accent-gold);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(251, 191, 36, 0.2);
+    padding: 3rem;
+    text-align: center;
+    max-width: 500px;
+    border-radius: 24px;
+}
+
+/* Button Glow Effect for Next Round */
+#next-round-btn {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #1e293b;
+    font-weight: 800;
+    border: none;
+    box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
+    transition: all 0.3s ease;
+}
+
+#next-round-btn:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 35px rgba(245, 158, 11, 0.5);
 }

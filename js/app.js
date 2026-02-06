@@ -4,6 +4,7 @@ import { ITEMS } from './items.js';
 // State
 let currentRound = null;
 let totalScore = 0;
+let currentRoundScore = 0; // Track score just for this round
 let currentLevel = 0; // The difficulty level (0-10)
 let revealedAnswers = []; // IDs of answers "completed"
 let isListening = false;
@@ -74,6 +75,7 @@ function startRound(id, isGameStart = false) {
     if (!playedRounds.includes(id)) playedRounds.push(id);
 
     revealedAnswers = [];
+    currentRoundScore = 0; // Reset for new round
 
     // UI Updates
     questionText.textContent = currentRound.question.canto;
@@ -176,37 +178,8 @@ function animateValue(obj, start, end, duration) {
 }
 
 function updateNextButton() {
-    let btn = document.getElementById('next-round-btn');
-    if (!btn) {
-        btn = document.createElement('button');
-        btn.id = 'next-round-btn';
-        btn.textContent = 'New Round →';
-        btn.className = 'topic-btn';
-        // Style adjustments for new location
-        btn.style.width = 'auto'; // Auto width
-        btn.style.marginTop = '0';
-        btn.style.background = 'var(--accent-primary)';
-        btn.style.color = 'white';
-        btn.style.fontWeight = 'bold';
-        btn.style.fontSize = '1rem';
-        btn.style.padding = '0.5rem 1.5rem';
-        btn.style.borderRadius = '50px';
-        btn.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
-
-        btn.onclick = () => {
-            nextRandomRound();
-            // startRound handles the speaking now
-        };
-
-        // Insert into the new controls row we made in HTML
-        const row = document.querySelector('.controls-row');
-        if (row) {
-            row.insertBefore(btn, row.firstChild);
-        } else {
-            // Fallback
-            document.querySelector('.interaction-zone').prepend(btn);
-        }
-    }
+    // Button removed per design update
+    // Logic kept empty to prevent errors if called elsewhere
 
     if (totalScore >= 500) {
         showWinScreen();
@@ -318,8 +291,12 @@ function activateNextAnswer() {
         if (ans) activateCard(ans);
     } else {
         // Round Complete
-        updateNextButton();
-        speak("Clear the board! Great job everyone. Click New Round to continue.");
+        // Round Complete
+        // Auto-advance or wait for sidebar selection?
+        // For now, we removed the button, so maybe just say "Great job."
+        // For now, we removed the button, so maybe just say "Great job."
+        // speak("Round complete! Great job everyone. Check the menu for more.");
+        showRoundSummary();
     }
 }
 
@@ -340,6 +317,27 @@ function activateCard(ans) {
     });
 
     statusText.textContent = "Listen...";
+}
+
+function showRoundSummary() {
+    const modal = document.getElementById('round-summary-modal');
+    const scoreDisplay = document.getElementById('round-score-display');
+    const nextBtn = document.getElementById('next-round-btn');
+
+    // Update score
+    scoreDisplay.textContent = currentRoundScore;
+
+    // Show modal
+    modal.classList.remove('hidden');
+
+    // Speak
+    speak(`Round complete! You earned ${currentRoundScore} points. Ready for the next course?`);
+
+    // Handle click (ensure one listener)
+    nextBtn.onclick = () => {
+        modal.classList.add('hidden');
+        nextRandomRound();
+    };
 }
 
 const FEEDBACK_PHRASES = {
@@ -506,6 +504,7 @@ function success(answer, grade, spokenText = "") {
     const earnedPoints = grade; // Direct mapping per user request
 
     totalScore += earnedPoints;
+    currentRoundScore += earnedPoints;
 
     // Bonus for perfect score
     if (grade >= 95) totalScore += 10;
@@ -1076,15 +1075,79 @@ function renderBanquet() {
 
         // Center of table is (0,0) conceptually, but HTML is top-left based
         // Table is 600x600, center is 300,300. Item is 80x80 (center 40,40)
+        // We set initial position
         const left = 300 + pi.x - 40;
         const top = 300 + pi.y - 40;
 
         el.style.left = `${left}px`;
         el.style.top = `${top}px`;
         el.style.transform = `rotate(${pi.rotation}deg)`;
+        el.style.cursor = 'grab'; // Indicate draggable
 
-        // Simple drag logic could go here, but for now static placement
+        // Make draggable
+        enableDrag(el, pi);
+
         table.appendChild(el);
+    });
+}
+
+function enableDrag(el, itemData) {
+    let isDragging = false;
+    let startX, startY;
+    let initialLeft, initialTop;
+
+    el.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+
+        // Get current computed style positions
+        initialLeft = parseFloat(el.style.left);
+        initialTop = parseFloat(el.style.top);
+
+        el.style.cursor = 'grabbing';
+        el.style.zIndex = 1000; // Bring to front while dragging
+
+        // Disable text selection during drag
+        document.body.style.userSelect = 'none';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        let newLeft = initialLeft + dx;
+        let newTop = initialTop + dy;
+
+        // Optional: Bounds checking (Keep within table approx)
+        // Table is 600x600 parent relevant to these coords
+        // Keep center point (newLeft + 40, newTop + 40) within reasonable circle?
+        // Or just rect bounds for simplicity
+
+        // Update DOM
+        el.style.left = `${newLeft}px`;
+        el.style.top = `${newTop}px`;
+    });
+
+    window.addEventListener('mouseup', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        el.style.cursor = 'grab';
+        el.style.zIndex = '';
+        document.body.style.userSelect = '';
+
+        // Update State
+        // Convert DOM position back to center-relative coordinates
+        // left = 300 + x - 40  => x = left + 40 - 300
+        const finalLeft = parseFloat(el.style.left);
+        const finalTop = parseFloat(el.style.top);
+
+        itemData.x = finalLeft + 40 - 300;
+        itemData.y = finalTop + 40 - 300;
+
+        saveProgress();
     });
 }
 
@@ -1215,9 +1278,9 @@ function init() {
             // 3. Play Start Sound (Shorter)
             playBong(600, 0.2);
 
-            // Open Sidebar
-            const sidebar = document.querySelector('.sidebar');
-            if (sidebar) sidebar.classList.add('open');
+            // Open Sidebar - REMOVED per user request
+            // const sidebar = document.querySelector('.sidebar');
+            // if (sidebar) sidebar.classList.add('open');
 
             // Set Level from UI
             const activeDiff = document.querySelector('.diff-btn.active');

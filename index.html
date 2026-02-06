@@ -22,7 +22,11 @@
     <div id="ambient-bg"></div>
 
     <!-- Start Screen Overlay -->
+    <!-- Start Screen Overlay -->
     <div id="start-screen">
+        <!-- Music Toggle (Moved to corner) -->
+        <button id="music-toggle" class="music-toggle-btn">🎵 OFF</button>
+
         <div class="start-content">
             <div class="start-logo">
                 <span class="logo-top">Dim</span>
@@ -66,9 +70,6 @@
                 <p>Welcome to <strong>Dim Sum Mom</strong>, the high-stakes dim sum game show where your Cantonese
                     pronunciation is the key to winning a banquet!</p>
             </div>
-
-            <!-- Music Toggle -->
-            <button id="music-toggle" class="music-toggle-btn">🎵 OFF</button>
 
             <!-- Persistence Message -->
             <div id="welcome-back-msg" class="welcome-back hidden">
@@ -118,7 +119,10 @@
         <aside class="sidebar">
             <button id="sidebar-close" class="sidebar-close-btn" aria-label="Close Menu">×</button>
             <div class="brand">
-                <h1>Dim Sum Mom</h1>
+                <div class="sidebar-logo">
+                    <span class="logo-top">Dim</span>
+                    <span class="logo-main">Sum Mom</span>
+                </div>
                 <div class="score-box">
                     <span class="score-label">SCORE</span>
                     <span class="total-score-display">0</span>
@@ -252,6 +256,22 @@
                     <div class="shop-grid" id="shop-grid">
                         <!-- Items injected here -->
                     </div>
+                </div>
+            </div>
+
+            <!-- Round Summary Modal -->
+            <div id="round-summary-modal" class="modal-overlay hidden">
+                <div class="modal-content summary-modal">
+                    <h2 id="summary-title" style="color: #fbbf24; font-size: 2.5rem; margin-bottom: 1rem;">Round
+                        Complete!</h2>
+                    <div class="summary-details" style="text-align: center; margin-bottom: 2rem;">
+                        <p style="font-size: 1.2rem; color: #cbd5e1;">Score for this round:</p>
+                        <div id="round-score-display" class="highlight-score"
+                            style="font-size: 4rem; font-weight: 900; color: white; text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);">
+                            0</div>
+                    </div>
+                    <button id="next-round-btn" class="action-btn" style="font-size: 1.5rem; padding: 1rem 3rem;">Next
+                        Course 🥟</button>
                 </div>
             </div>
 
