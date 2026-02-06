@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dim Sum Mom</title>
+    <title>Dim Sum Momma</title>
     <meta name="description" content="A friendly Cantonese learning game show!">
 
     <!-- Fonts -->
@@ -24,13 +24,17 @@
     <!-- Start Screen Overlay -->
     <!-- Start Screen Overlay -->
     <div id="start-screen">
+        <div class="spotlight-container">
+            <div class="spotlight"></div>
+            <div class="spotlight"></div>
+        </div>
         <!-- Music Toggle (Moved to corner) -->
         <button id="music-toggle" class="music-toggle-btn">🎵 OFF</button>
 
         <div class="start-content">
             <div class="start-logo">
                 <span class="logo-top">Dim</span>
-                <span class="logo-main">Sum Mom</span>
+                <span class="logo-main">Sum Momma</span>
             </div>
 
             <div class="mascot-container">
@@ -67,7 +71,7 @@
                     style="color:#fbbf24">Impress her to eat!</span></p>
 
             <div class="start-explanation">
-                <p>Welcome to <strong>Dim Sum Mom</strong>, the high-stakes dim sum game show where your Cantonese
+                <p>Welcome to <strong>Dim Sum Momma</strong>, the high-stakes dim sum game show where your Cantonese
                     pronunciation is the key to winning a banquet!</p>
             </div>
 
@@ -127,7 +131,7 @@
             <div class="brand">
                 <div class="sidebar-logo">
                     <span class="logo-top">Dim</span>
-                    <span class="logo-main">Sum Mom</span>
+                    <span class="logo-main">Sum Momma</span>
                 </div>
                 <div class="score-box">
                     <span class="score-label">SCORE</span>
@@ -136,15 +140,40 @@
             </div>
 
             <div class="topics-list-container">
+                <div class="sidebar-controls">
+                    <button id="nav-home-btn" class="sidebar-btn active">
+                        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                            <polyline points="9 22 9 12 15 12 15 22" />
+                        </svg>
+                        Game Home
+                    </button>
+                    <button id="view-banquet-btn" class="sidebar-btn banquet-nav-btn">
+                        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="2" y="14" width="20" height="8" rx="2" />
+                            <path d="M6 14V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8" />
+                            <line x1="12" y1="4" x2="12" y2="14" />
+                            <path d="M9 14v-3" stroke-linecap="round" />
+                            <path d="M15 14v-3" stroke-linecap="round" />
+                        </svg>
+                        View Banquet
+                    </button>
+                    <button id="nav-shop-btn" class="sidebar-btn shop-nav-btn">
+                        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <path d="M16 10a4 4 0 0 1-8 0" />
+                        </svg>
+                        Dim Sum Shop
+                    </button>
+                </div>
                 <h3>Select a Round</h3>
                 <nav id="chapter-nav">
                     <!-- Topics injected here -->
                 </nav>
-                <div class="sidebar-controls">
-                    <button id="nav-home-btn" class="sidebar-btn active">🏠 Game Home</button>
-                    <button id="view-banquet-btn" class="sidebar-btn banquet-nav-btn">🍱 View Banquet</button>
-                    <button id="nav-shop-btn" class="sidebar-btn shop-nav-btn">🛒 Dim Sum Shop</button>
-                </div>
             </div>
         </aside>
 
@@ -192,7 +221,7 @@
                 <!-- 0. Game Show Logo -->
                 <div class="game-logo">
                     <span class="logo-top">Dim</span>
-                    <span class="logo-main">Sum Mom</span>
+                    <span class="logo-main">Sum Momma</span>
                 </div>
 
                 <!-- Avatar Moved to Bottom Right -->
@@ -236,6 +265,8 @@
                     <p>Spend Dumpling Dollars to decorate!</p>
                     <button id="close-banquet-btn" class="secondary-btn">Back to Game</button>
                     <button id="open-shop-btn" class="shop-btn">Open Dim Sum Shop 🥟</button>
+                    <button id="auto-organize-btn" class="secondary-btn" style="margin-left: 10px;">Auto Organize
+                        🪄</button>
                 </div>
             </div>
 
@@ -274,7 +305,7 @@
                 <div class="start-content">
                     <div class="start-logo">
                         <span class="logo-top">Dim</span>
-                        <span class="logo-main">Sum Mom</span>
+                        <span class="logo-main">Sum Momma</span>
                     </div>
 
                     <div class="mascot-container">
@@ -420,6 +451,22 @@
                             <label class="switch">
                                 <input type="checkbox" id="lang-switch" checked>
                                 <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <!-- Speed Toggle -->
+                        <div class="lang-toggle speed-toggle-container">
+                            <span id="speed-label">Rabbit Mode 🐰</span>
+                            <label class="switch">
+                                <input type="checkbox" id="speed-switch">
+                                <span class="slider round slider-green"></span>
+                            </label>
+                        </div>
+                        <!-- Tiger Mom Toggle -->
+                        <div class="lang-toggle tiger-toggle-container" style="margin-left: 1rem;">
+                            <span id="tiger-label">Tiger Mom 🐯</span>
+                            <label class="switch">
+                                <input type="checkbox" id="tiger-switch">
+                                <span class="slider round slider-red"></span>
                             </label>
                         </div>
                     </div>

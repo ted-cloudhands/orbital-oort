@@ -9,14 +9,34 @@ export const ITEM_ASSETS = {
 
     teapot: `<svg viewBox="0 0 100 100" class="item-svg"><path d="M25,85 Q20,30 50,25 Q80,30 75,85 L25,85 Z" fill="#fff" stroke="#94a3b8" stroke-width="2"/><path d="M75,50 Q95,40 95,60 Q95,80 75,70" fill="none" stroke="#94a3b8" stroke-width="4"/><path d="M25,50 Q5,30 5,20" fill="none" stroke="#94a3b8" stroke-width="4"/><ellipse cx="50" cy="25" rx="15" ry="5" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/><circle cx="50" cy="20" r="3" fill="#94a3b8"/><circle cx="40" cy="60" r="3" fill="#333"/><circle cx="60" cy="60" r="3" fill="#333"/><path d="M45,65 Q50,68 55,65" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"/></svg>`,
 
-    chickenfeet: `<svg viewBox="0 0 100 100" class="item-svg"><path d="M30,80 Q30,40 50,30 Q70,40 70,80" fill="#b91c1c" stroke="#7f1d1d" stroke-width="3"/><path d="M50,30 L40,10" stroke="#7f1d1d" stroke-width="3"/><path d="M50,30 L60,10" stroke="#7f1d1d" stroke-width="3"/><path d="M50,30 L50,5" stroke="#7f1d1d" stroke-width="3"/><circle cx="42" cy="50" r="2" fill="#fff"/><circle cx="58" cy="50" r="2" fill="#fff"/><path d="M45,60 Q50,55 55,60" fill="none" stroke="#fff" stroke-width="1"/></svg>`
+    chickenfeet: `<svg viewBox="0 0 100 100" class="item-svg"><path d="M30,80 Q30,40 50,30 Q70,40 70,80" fill="#b91c1c" stroke="#7f1d1d" stroke-width="3"/><path d="M50,30 L40,10" stroke="#7f1d1d" stroke-width="3"/><path d="M50,30 L60,10" stroke="#7f1d1d" stroke-width="3"/><path d="M50,30 L50,5" stroke="#7f1d1d" stroke-width="3"/><circle cx="42" cy="50" r="2" fill="#fff"/><circle cx="58" cy="50" r="2" fill="#fff"/><path d="M45,60 Q50,55 55,60" fill="none" stroke="#fff" stroke-width="1"/></svg>`,
+
+    basket: `<svg viewBox="0 0 100 100" class="item-svg"><circle cx="50" cy="50" r="48" fill="#fde68a" stroke="#d97706" stroke-width="2"/><circle cx="50" cy="50" r="42" fill="none" stroke="#d97706" stroke-width="1" stroke-dasharray="5,5"/><path d="M10,50 L90,50" stroke="#d97706" stroke-width="1" opacity="0.5"/><path d="M50,10 L50,90" stroke="#d97706" stroke-width="1" opacity="0.5"/></svg>`,
+
+    plate: `<svg viewBox="0 0 100 100" class="item-svg filter-shadow"><circle cx="50" cy="50" r="45" fill="#fff" stroke="#cbd5e1" stroke-width="2"/><circle cx="50" cy="50" r="30" fill="none" stroke="#f1f5f9" stroke-width="2"/></svg>`,
+
+    chopsticks: `<svg viewBox="0 0 100 100" class="item-svg filter-shadow"><path d="M30,90 L40,10" stroke="#78350f" stroke-width="4" stroke-linecap="round"/><path d="M50,90 L60,10" stroke="#78350f" stroke-width="4" stroke-linecap="round"/></svg>`,
+
+    teacup: `<svg viewBox="0 0 100 100" class="item-svg filter-shadow"><circle cx="50" cy="50" r="25" fill="#fff" stroke="#cbd5e1" stroke-width="2"/><circle cx="50" cy="50" r="20" fill="#fef3c7" stroke="none"/></svg>`,
+
+    cheungfun: `<svg viewBox="0 0 100 100" class="item-svg"><path d="M20,30 Q50,20 80,30 L80,50 Q50,40 20,50 Z" fill="#fff" stroke="#e2e8f0" stroke-width="2"/><path d="M20,55 Q50,45 80,55 L80,75 Q50,65 20,75 Z" fill="#fff" stroke="#e2e8f0" stroke-width="2"/><path d="M30,35 Q40,35 50,38" fill="none" stroke="#78350f" stroke-width="2" opacity="0.6"/><path d="M40,60 Q50,60 60,63" fill="none" stroke="#78350f" stroke-width="2" opacity="0.6"/></svg>`,
+
+    stickyrice: `<svg viewBox="0 0 100 100" class="item-svg"><path d="M20,80 L20,30 Q50,10 80,30 L80,80 Q50,100 20,80" fill="#166534" stroke="#14532d" stroke-width="2"/><path d="M20,30 Q50,50 80,30" fill="#15803d" stroke="#14532d" stroke-width="1"/><path d="M50,15 L50,90" stroke="#fff" stroke-width="2" stroke-dasharray="4,4" opacity="0.3"/></svg>`
 };
 
 export const ITEMS = [
-    { id: 'bao', name: 'Char Siu Bao', price: 5, asset: ITEM_ASSETS.bao },
-    { id: 'siumai', name: 'Siu Mai', price: 8, asset: ITEM_ASSETS.siumai },
-    { id: 'hargow', name: 'Har Gow', price: 10, asset: ITEM_ASSETS.hargow },
-    { id: 'eggtart', name: 'Egg Tart', price: 6, asset: ITEM_ASSETS.eggtart },
-    { id: 'teapot', name: 'Tea Pot', price: 15, asset: ITEM_ASSETS.teapot },
-    { id: 'chickenfeet', name: 'Chicken Feet', price: 12, asset: ITEM_ASSETS.chickenfeet }
+    // Dim Sum (Goes in Baskets)
+    { id: 'bao', name: 'Char Siu Bao', price: 5, type: 'dimsum', asset: ITEM_ASSETS.bao },
+    { id: 'siumai', name: 'Siu Mai', price: 8, type: 'dimsum', asset: ITEM_ASSETS.siumai },
+    { id: 'hargow', name: 'Har Gow', price: 10, type: 'dimsum', asset: ITEM_ASSETS.hargow },
+    { id: 'eggtart', name: 'Egg Tart', price: 6, type: 'dimsum', asset: ITEM_ASSETS.eggtart },
+    { id: 'chickenfeet', name: 'Chicken Feet', price: 12, type: 'dimsum', asset: ITEM_ASSETS.chickenfeet },
+    { id: 'cheungfun', name: 'Cheung Fun', price: 9, type: 'dimsum', asset: ITEM_ASSETS.cheungfun },
+    { id: 'stickyrice', name: 'Sticky Rice', price: 11, type: 'dimsum', asset: ITEM_ASSETS.stickyrice },
+
+    // Tableware & Drinks (Goes on Table)
+    { id: 'teapot', name: 'Tea Pot', price: 15, type: 'tableware', asset: ITEM_ASSETS.teapot },
+    { id: 'teacup', name: 'Tea Cup', price: 3, type: 'tableware', asset: ITEM_ASSETS.teacup },
+    { id: 'plate', name: 'Plate', price: 2, type: 'tableware', asset: ITEM_ASSETS.plate },
+    { id: 'chopsticks', name: 'Chopsticks', price: 2, type: 'tableware', asset: ITEM_ASSETS.chopsticks }
 ];

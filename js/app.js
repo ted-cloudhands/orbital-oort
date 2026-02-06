@@ -1,5 +1,5 @@
 import { gameData } from './chapters.js';
-import { ITEMS } from './items.js';
+import { ITEMS, ITEM_ASSETS } from './items.js';
 
 // State
 let currentRound = null;
@@ -11,6 +11,8 @@ let isListening = false;
 let recognition = null;
 let synthesis = window.speechSynthesis;
 let voices = [];
+let finalVoice = null;
+let speechRate = 1.0; // Default: Rabbit Mode (Normal)
 
 // DOM Elements
 const chapterNav = document.getElementById('chapter-nav');
@@ -18,7 +20,9 @@ const scoreDisplays = document.querySelectorAll('.total-score-display');
 const gameBoard = document.getElementById('game-board');
 const questionText = document.getElementById('question-text');
 const questionSub = document.getElementById('question-sub');
-const micBtn = document.getElementById('mic-btn');
+let micBtn = document.getElementById('mic-btn');
+
+
 const statusText = document.getElementById('status-text');
 const liveSubtitle = document.getElementById('live-subtitle');
 const avatarMouth = document.getElementById('mouth');
@@ -34,17 +38,17 @@ const diffDesc = document.getElementById('difficulty-desc');
 const levelDisplay = document.getElementById('current-level-display');
 
 const DIFFICULTY_DESCS = {
-    0: "Total Novice - Simple greetings",
-    1: "Novice - Basic Dim Sum & Weather",
-    2: "Beginner - Shopping & Prices",
-    3: "Intermediate - Taxi & Directions",
-    4: "Conversational - Romance & Feelings",
-    5: "Fluent - Internet Slang",
-    6: "Advanced - Complaints & Life",
-    7: "Professional - Office & Work",
-    8: "Expert - Emergency Situations",
-    9: "Master - Proverbs & Idioms",
-    10: "Grandmaster - Deep Philosophy"
+    0: "Just A Baby 👶",
+    1: "Learning Manners 🍵",
+    2: "Ordering For Family 🥢",
+    3: "No More Embarrassment 😳",
+    4: "Getting A Discount 💸",
+    5: "Impressing Aunties 🥟",
+    6: "Marriage Material 💍",
+    7: "Family Pride 🦁",
+    8: "Mom's Favorite ❤️",
+    9: "Better Than Cousin 🏆",
+    10: "Ancestors Smiling ✨"
 };
 
 // Initialize
@@ -53,6 +57,17 @@ const DIFFICULTY_DESCS = {
 
 function loadVoices() {
     voices = synthesis.getVoices();
+
+    // Select Cantonese Voice
+    finalVoice = voices.find(v => v.lang === 'zh-HK');
+    if (!finalVoice) finalVoice = voices.find(v => v.lang === 'zh-TW');
+    if (!finalVoice) finalVoice = voices.find(v => v.lang.startsWith('zh'));
+
+    if (finalVoice) {
+        console.log("Voice loaded:", finalVoice.name);
+    } else {
+        console.warn("No suitable Cantonese voice found.");
+    }
 }
 
 // Sidebar
@@ -69,19 +84,55 @@ function renderSidebar() {
     // Render Groups
     Object.keys(groups).sort((a, b) => a - b).forEach(diffLevel => {
         const rounds = groups[diffLevel];
-        const groupDiv = document.createElement('div');
-        groupDiv.className = 'round-group';
+        const groupWrapper = document.createElement('div');
+        groupWrapper.className = 'level-group-wrapper';
 
         const header = document.createElement('div');
         header.className = 'group-header';
-        header.textContent = `Level ${diffLevel}`;
-        // Optionally add description from DIFFICULTY_DESCS
-        // but keep it compact for now
 
-        groupDiv.appendChild(header);
+        // Chevron Icon
+        const chevron = document.createElement('span');
+        chevron.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+        chevron.className = 'group-chevron';
+
+        const titleSpan = document.createElement('span');
+        // Use custom name or fallback
+        const customName = DIFFICULTY_DESCS[diffLevel];
+        titleSpan.textContent = customName ? customName : `Level ${diffLevel}`;
+
+        header.appendChild(titleSpan);
+        header.appendChild(chevron);
+
+        // Content Container
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'group-content';
+
+        // Determine if this group should be open
+        // Open if it matches current level OR if it's Level 0 and we haven't started yet
+        const isActiveLevel = parseInt(diffLevel) === currentLevel;
+        if (isActiveLevel) {
+            contentDiv.classList.add('open');
+            header.classList.add('active');
+        }
+
+        // Click Handler
+        header.onclick = () => {
+            const isOpen = contentDiv.classList.contains('open');
+
+            // Close all others (optional - mimics accordion)
+            document.querySelectorAll('.group-content').forEach(el => el.classList.remove('open'));
+            document.querySelectorAll('.group-header').forEach(el => el.classList.remove('active'));
+
+            if (!isOpen) {
+                contentDiv.classList.add('open');
+                header.classList.add('active');
+            }
+        };
+
+        groupWrapper.appendChild(header);
 
         rounds.forEach((round, index) => {
-            const btn = document.createElement('div'); // Using div for complex layout, clickable
+            const btn = document.createElement('div');
             btn.className = 'round-card';
 
             // Check status
@@ -103,16 +154,20 @@ function renderSidebar() {
 
             btn.onclick = () => {
                 startRound(round.id);
-                // Re-render to update 'active' state visually immediately
                 renderSidebar();
-                // Close sidebar on mobile/narrow screens if needed, 
-                // but for now keeping it open or letting user close it.
+
+                // Auto-close sidebar on mobile
+                if (window.innerWidth < 768) {
+                    const sidebar = document.querySelector('.sidebar');
+                    if (sidebar) sidebar.classList.remove('open');
+                }
             };
 
-            groupDiv.appendChild(btn);
+            contentDiv.appendChild(btn);
         });
 
-        chapterNav.appendChild(groupDiv);
+        groupWrapper.appendChild(contentDiv);
+        chapterNav.appendChild(groupWrapper);
     });
 }
 
@@ -128,25 +183,27 @@ function startRound(id, isGameStart = false) {
 
     revealedAnswers = [];
     currentRoundScore = 0; // Reset for new round
+    if (micBtn) micBtn.classList.add('hidden'); // Ensure mic is hidden at start of round
+
 
     // UI Updates
     questionText.textContent = currentRound.question.canto;
     questionText.style.cursor = 'pointer';
-    questionText.onclick = () => speak(currentRound.question.canto);
+    questionText.onclick = () => speak(currentRound.question.canto, false, null, true);
     questionSub.textContent = `${currentRound.question.pinyin} - ${currentRound.question.english}`;
 
     // Speak the question, then start the first answer!
     // Intro Phrase first (Custom if first round of session)
     const intro = isGameStart ?
-        "Welcome back to Dim Sum Mom! Let's see your skills." :
+        "Welcome back to Dim Sum Momma! Let's see your skills." :
         getIntroPhrase();
 
     speak(intro, false, () => {
-        // Then speak the actual question (Canto)
+        // Then speak the actual question (Canto) - USE USER RATE
         speak(currentRound.question.canto, true, () => {
             // Then activate the board (Faster: 500 -> 200)
             setTimeout(activateNextAnswer, 300);
-        });
+        }, true);
     });
 
     renderBoard();
@@ -163,7 +220,19 @@ const INTRO_PHRASES = [
     "Lets go! Baa-da-bop-bop-bop!", "Next round!"
 ];
 
+// Tiger Mom Phrases
+const TIGER_INTO_PHRASES = [
+    "Aiya, are you even awake? Focus!", "Don't embarrass me in front of the neighbors.",
+    "This one is easy. Even your cousin can do it.", "If you get this wrong, no dinner.",
+    "Pay attention! I didn't raise a quitter.", "Stop dreaming, start listening!",
+    "You call that effort? Try harder on this one.", "Make me proud... for once.",
+    "Why are you so slow? Hurry up!", "Don't waste my time. Listen!"
+];
+
 function getIntroPhrase() {
+    if (tigerMomMode) {
+        return TIGER_INTO_PHRASES[Math.floor(Math.random() * TIGER_INTO_PHRASES.length)];
+    }
     return INTRO_PHRASES[Math.floor(Math.random() * INTRO_PHRASES.length)];
 }
 
@@ -333,6 +402,7 @@ let fullTranscript = "";
 let currentSessionText = "";
 let ttsActive = false;
 let transcriptBuffer = ""; // Restoring legacy name if used elsewhere
+let tigerMomMode = false; // State for Tiger Mom Mode
 
 function activateNextAnswer() {
     // Find the NEXT available card in the DOM sequence (visual order)
@@ -359,20 +429,24 @@ function activateNextAnswer() {
 
 function activateCard(ans) {
     if (revealedAnswers.includes(ans.id)) return;
-    // ...
+
     document.querySelectorAll('.answer-card').forEach(el => el.classList.remove('active-practice'));
     const card = document.getElementById(`ans-${ans.id}`);
+
     card.classList.add('active-practice');
+
+    // Hide Mic initially (while speaking)
+    if (micBtn) micBtn.classList.add('hidden');
 
     practiceTarget = ans;
 
-    // Speak it
+    // Speak it - USE USER RATE
     speak(ans.canto, false, () => {
-        // ONLY start listening when the prompt is done speaking!
-        // PTT UPDATE: DO NOT AUTO START. Wait for user.
+        // Show Mic ONLY when done speaking
+        if (micBtn) micBtn.classList.remove('hidden');
+
         statusText.textContent = "Hold Mic to Speak";
-        // setTimeout(startListening, 200); // <-- REMOVED
-    });
+    }, true);
 
     statusText.textContent = "Listen...";
 }
@@ -384,7 +458,12 @@ function showRoundSummary() {
     const feedbackText = document.getElementById('round-feedback-text');
     const nextBtn = document.getElementById('next-round-btn');
 
+
+    // Hide Mic
+    if (micBtn) micBtn.classList.add('hidden');
+
     // Update scores
+
     roundScoreDisplay.textContent = currentRoundScore;
     if (totalScoreDisplay) totalScoreDisplay.textContent = totalScore;
 
@@ -399,8 +478,23 @@ function showRoundSummary() {
         "Your tones are improving!",
         "Time for the next course!"
     ];
+
+    // Tiger Mom Summary Feedbacks
+    const tigerFeedbacks = [
+        "Score is okay. But why not higher?",
+        "Only this many points? Aiya.",
+        "Your cousin got full marks. Just saying.",
+        "You can eat... but study more later.",
+        "Almost acceptable. Almost.",
+        "I expected better from you.",
+        "Lucky guess?",
+        "Good. Now go practice piano."
+    ];
+
+    const pool = tigerMomMode ? tigerFeedbacks : feedbacks;
+
     if (feedbackText) {
-        feedbackText.textContent = `"${feedbacks[Math.floor(Math.random() * feedbacks.length)]}"`;
+        feedbackText.textContent = `"${pool[Math.floor(Math.random() * pool.length)]}"`;
     }
 
     // Show screen
@@ -450,13 +544,41 @@ const FEEDBACK_PHRASES = {
     ]
 };
 
+const TIGER_FEEDBACK_PHRASES = {
+    perfect: [
+        "Finally, you did it right.", "Good. Don't get cocky.",
+        "About time you learned.", "Acceptable. Very acceptabe.",
+        "See? Was that so hard?", "Okay, you have potential.",
+        "Not embarrassing. Good job.", "You sound almost educated."
+    ],
+    good: [
+        "Why not 100%? Lazy.", "It's okay. But okay is not nimble.",
+        "You can do better. Try harder.", "70% effort, I can tell.",
+        "Better than nothing, I guess.", "My friend's son speaks better.",
+        "Just 'good'? Aim for perfect!", "Don't settle for average."
+    ],
+    okay: [
+        "Aiya, make me headache.", "Are you even trying?",
+        "My ears are hurting.", "So rigid! Relax your mouth.",
+        "You sound like a tourist.", "Practice more! Less video games!",
+        "I am judging you.", "Is that your best?"
+    ],
+    poor: [
+        "What was that? Terrible.", "Aiya! You are dishonoring the family.",
+        "Stop mumbling! Speak up!", "No dinner for you tonight.",
+        "Did you learn nothing?", "Go study more!",
+        "Hopeless... try again.", "I am closing my eyes in shame.",
+        "Even the dog understands better."
+    ]
+};
+
 function getFeedback(score) {
     let category = 'poor';
     if (score >= 90) category = 'perfect';
     else if (score >= 70) category = 'good';
     else if (score >= 40) category = 'okay';
 
-    const phrases = FEEDBACK_PHRASES[category];
+    const phrases = tigerMomMode ? TIGER_FEEDBACK_PHRASES[category] : FEEDBACK_PHRASES[category];
     return phrases[Math.floor(Math.random() * phrases.length)];
 }
 
@@ -497,40 +619,47 @@ function handleInput(text) {
     }
     // 2. Cantonese Mode Handling
     else {
-        // A. Pinyin Substring Analysis
-        let pinyinMatches = 0;
-        targetPinyin.forEach(p => {
-            // Check for exact pinyin syllable match
-            if (p.length > 1 && lowerText.includes(p)) pinyinMatches++;
-        });
+        // B. Cantonese Mode Handling
 
-        // B. Character Analysis (if input contains Canto chars)
-        let charMatches = 0;
         let hasCantoChars = /[\u4e00-\u9fa5]/.test(text);
+
         if (hasCantoChars) {
+            // 1. Scoring based on Chinese Characters
+            let charMatches = 0;
+            // Iterate over Target to find matches (allow out of order? No, usually sequence matters but for simple loose grading:
+            // Let's just count inclusion for now, or match index?
+            // Simple inclusion is safer for "loose" speech recognition
             for (let char of targetCanto) {
                 if (text.includes(char)) charMatches++;
             }
+
+            if (targetCanto.length > 0) {
+                const accuracy = charMatches / targetCanto.length;
+                rawScore = accuracy * 95; // Max base 95
+
+                // Bonus for exact length match (prevents extra noise)
+                if (text.length === targetCanto.length) rawScore += 5;
+            }
+
+        } else {
+            // 2. Scoring based on Pinyin (User spoke romanized or recon returned pinyin?)
+            // Usually recon returns Canto chars for zh-HK, but if it returns English-ish text...
+
+            let pinyinMatches = 0;
+            targetPinyin.forEach(p => {
+                // Check for exact pinyin syllable match
+                // We use space tokenizer for targetPinyin
+                if (p.length > 1 && lowerText.includes(p)) pinyinMatches++;
+            });
+
+            if (targetPinyin.length > 0) {
+                const accuracy = pinyinMatches / targetPinyin.length;
+                rawScore = accuracy * 90;
+            }
         }
 
-        // C. Calculate weighted score
-        const totalSegments = targetPinyin.length + (hasCantoChars ? targetCanto.length : 0);
-        const actualHits = pinyinMatches + charMatches;
-
-        if (totalSegments > 0) {
-            const accuracy = actualHits / totalSegments;
-            rawScore = accuracy * 90; // Base up to 90
-
-            // Boost for sequence/length similarity
-            const lenDiff = Math.abs(text.length - targetPinyin.join('').length);
-            if (lenDiff < 5) rawScore += 5;
-        }
-
-        // Fallback: English spoken in Canto mode?
-        if (lowerText.includes(targetEnglish)) rawScore += 45;
-
-        // Random jitter (1-9 points) to make it look organic "AI Grading"
-        rawScore += Math.floor(Math.random() * 9) + 1;
+        // Random jitter (1-5 points) to make it look organic "AI Grading"
+        rawScore += Math.floor(Math.random() * 5);
     }
 
     // Clamp
@@ -558,7 +687,12 @@ function success(answer, grade, spokenText = "") {
     const card = document.getElementById(`ans-${answer.id}`);
     if (card) {
         card.classList.remove('active-practice');
+
         card.classList.add('completed');
+
+        // Hide mic after success
+        if (micBtn) micBtn.classList.add('hidden');
+
 
         // UPDATE THE CARD SCORE TO SHOW THE GRADE
         const scoreEl = document.getElementById(`score-${answer.id}`);
@@ -926,61 +1060,21 @@ function playBong(freq = 500, duration = 0.5) {
 }
 
 // Avatar & TTS
-function speak(text, showBubble = false, onComplete = null) {
+function speak(text, showBubble = false, onComplete = null, useUserRate = false) {
     if (!synthesis) return;
 
-    // 1. Mark TTS as active and STOP listening immediately if it was on
-    ttsActive = true;
-    if (isListening) stopListening();
+    // Create Utterance
+    const utter = new SpeechSynthesisUtterance(text);
 
-    // VISUAL UPDATE
-    statusText.textContent = "Bot Speaking...";
-    statusText.style.color = 'var(--text-muted)';
-
-    // Chrome Fix: Ensure engine is ready/resumed
-    if (synthesis.paused) synthesis.resume();
-
-    // Only cancel if clearly needed, or if we are interrupting
-    if (synthesis.speaking) synthesis.cancel();
-
-    // Reload voices if empty (common Chrome issue on first load)
-    if (voices.length === 0) {
-        voices = synthesis.getVoices();
-    }
-
-    if (showBubble) {
+    if (showBubble && avatarBubble) {
         avatarBubble.textContent = text;
         avatarBubble.classList.add('visible');
         setTimeout(() => avatarBubble.classList.remove('visible'), 4000);
     }
 
-    const utter = new SpeechSynthesisUtterance(text);
-
-    // Improved Voice Selection Logic
-    // Prioritize Google Neural voices which are most natural on Chrome
-    const preferredVoice = voices.find(v =>
-        (v.name.includes("Google") && (v.lang === 'zh-HK' || v.name.includes('Cantonese') || v.name.includes('粵語')))
-    );
-
-    // Secondary choice: macOS High Quality voices
-    const macVoice = voices.find(v =>
-        ['Sin-ji', 'Ting-Ting', 'HiuGaai'].some(name => v.name.includes(name)) &&
-        (v.name.includes('Premium') || v.name.includes('Enhanced')) // Try to get non-compact
-    );
-
-    // Tertiary: Any named HK voice
-    const anyMacVoice = voices.find(v =>
-        ['Sin-ji', 'Ting-Ting', 'HiuGaai'].some(name => v.name.includes(name))
-    );
-
-    // Fallback
-    const fallbackVoice = voices.find(v => v.lang === 'zh-HK') || voices.find(v => v.lang.includes('zh'));
-
-    const finalVoice = preferredVoice || macVoice || anyMacVoice || fallbackVoice;
-
     if (finalVoice) {
         utter.voice = finalVoice;
-        utter.rate = 1.0;
+        utter.rate = useUserRate ? speechRate : 1.0; // modified
         utter.pitch = 1.0;
         // console.log("Speaking with:", finalVoice.name);
     } else {
@@ -1076,12 +1170,17 @@ function switchView(viewName) {
     document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.remove('active'));
 
     if (viewName === 'game') {
-        banquetArea.classList.remove('visible');
+        banquetArea.classList.remove('full-mode');
+        // Ensure it's still visible as mini-mode if meaningful, 
+        // but 'visible' class was used for opacity previously. 
+        // We now rely on default CSS being visible. 
+        // Maybe we just ensure it's not hidden if we ever hide it.
+        banquetArea.style.display = 'flex';
+
         shopModal.classList.remove('visible');
         document.getElementById('nav-home-btn').classList.add('active');
 
         // If returning to game, ensure overlays are handled correctly
-        // But if we came from StartScreen, we might want to go BACK to StartScreen?
         if (previousView === 'start') {
             startScreen.style.display = 'flex';
             startScreen.style.opacity = '1';
@@ -1090,13 +1189,15 @@ function switchView(viewName) {
         }
 
     } else if (viewName === 'banquet') {
-        banquetArea.classList.add('visible');
+        banquetArea.classList.add('full-mode');
         shopModal.classList.remove('visible');
         document.getElementById('view-banquet-btn').classList.add('active');
         renderBanquet();
     } else if (viewName === 'shop') {
         updateShopUI();
         shopModal.classList.add('visible');
+        // Shop is an overlay, so we might want to keep banquet in full mode if we were there?
+        // But simplifying: just show shop.
         document.getElementById('nav-shop-btn').classList.add('active');
     }
 }
@@ -1118,13 +1219,16 @@ function openShopFrom(source) {
     switchView('banquet');
 }
 
+// BASKET LOGIC
+const BASKET_CAPACITY = 3;
+
 function initShop() {
     // 1. Convert Logic
     const convBtn = document.getElementById('convert-btn');
     if (convBtn) {
         convBtn.onclick = () => {
-            if (totalScore >= 100) {
-                totalScore -= 100;
+            if (totalScore >= 10) {
+                totalScore -= 10;
                 dumplingDollars += 1;
                 updateShopUI();
                 saveProgress();
@@ -1142,17 +1246,41 @@ function initShop() {
     const grid = document.getElementById('shop-grid');
     if (grid) {
         grid.innerHTML = '';
+
+        // Group Items
+        const groups = { 'dimsum': [], 'tableware': [] };
         ITEMS.forEach(item => {
-            const el = document.createElement('div');
-            el.className = 'shop-item';
-            el.innerHTML = `
-                ${item.asset}
-                <span class="item-name">${item.name}</span>
-                <span class="item-price">${item.price} 🥟</span>
-            `;
-            el.onclick = () => buyItem(item);
-            grid.appendChild(el);
+            const type = item.type || 'tableware'; // Default fallback
+            if (!groups[type]) groups[type] = [];
+            groups[type].push(item);
         });
+
+        // Helper to render section
+        const renderSection = (title, items) => {
+            if (items.length === 0) return;
+            const header = document.createElement('h3');
+            header.textContent = title;
+            header.style.width = '100%';
+            header.style.margin = '10px 0 5px 0';
+            header.style.color = '#fbbf24';
+            header.style.fontFamily = "'Noto Sc', sans-serif";
+            grid.appendChild(header);
+
+            items.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'shop-item';
+                el.innerHTML = `
+                    ${item.asset}
+                    <span class="item-name">${item.name}</span>
+                    <span class="item-price">${item.price} 🥟</span>
+                `;
+                el.onclick = () => buyItem(item);
+                grid.appendChild(el);
+            });
+        };
+
+        renderSection("Dim Sum (Steamed)", groups['dimsum']);
+        renderSection("Tableware & Drinks", groups['tableware']);
     }
 
     // 3. Navigation
@@ -1171,27 +1299,23 @@ function initShop() {
     if (closeBanquetBtn) closeBanquetBtn.onclick = () => switchView('game');
     if (openShopBtn) openShopBtn.onclick = () => switchView('shop');
     if (closeShopBtn) closeShopBtn.onclick = () => {
-        // Return to whoever called us? Or just banquet for now
+        // Return to whoever called us? or just banquet
         switchView('banquet');
     };
+
+    const autoOrgBtn = document.getElementById('auto-organize-btn');
+    if (autoOrgBtn) autoOrgBtn.onclick = () => autoOrganizeBanquet();
 }
 
 function buyItem(item) {
     if (dumplingDollars >= item.price) {
         dumplingDollars -= item.price;
 
-        // Add to banquet (Random position initially)
-        const angle = Math.random() * Math.PI * 2;
-        const radius = Math.random() * 180; // Within table radius
-        const x = Math.cos(angle) * radius;
-        const y = Math.sin(angle) * radius;
-
-        placedItems.push({
-            itemId: item.id,
-            x: x,
-            y: y,
-            rotation: Math.random() * 360
-        });
+        if (item.type === 'dimsum') {
+            addDimSumToBasket(item);
+        } else {
+            addLooseItem(item);
+        }
 
         updateShopUI();
         saveProgress();
@@ -1202,38 +1326,294 @@ function buyItem(item) {
     }
 }
 
+function addDimSumToBasket(item) {
+    // 1. Find a basket with space
+    // Iterate placedItems, find type='basket'
+    let targetBasket = null;
+
+    // Search backwards to fill most recent basket first
+    for (let i = placedItems.length - 1; i >= 0; i--) {
+        if (placedItems[i].type === 'basket' && placedItems[i].contents.length < BASKET_CAPACITY) {
+            targetBasket = placedItems[i];
+            break;
+        }
+    }
+
+    if (!targetBasket) {
+        // Create NEW Basket
+        targetBasket = createBasket();
+        placedItems.push(targetBasket);
+    }
+
+    // Add item to basket
+    targetBasket.contents.push({
+        itemId: item.id,
+        rotation: Math.random() * 360
+    });
+
+    // Re-render
+    renderBanquet();
+}
+
+function createBasket() {
+    // Random position logic, but maybe cascading?
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 50 + Math.random() * 180; // keep somewhat central
+    return {
+        id: 'basket-' + Date.now() + Math.random(),
+        type: 'basket',
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius,
+        rotation: Math.random() * 360,
+        contents: []
+    };
+}
+
+function addLooseItem(item) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 50 + Math.random() * 200;
+
+    placedItems.push({
+        id: 'item-' + Date.now(),
+        type: 'loose',
+        itemId: item.id,
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius,
+        rotation: Math.random() * 360
+    });
+
+    renderBanquet();
+}
+
 function renderBanquet() {
     const table = document.querySelector('.banquet-table');
     if (!table) return;
 
-    // Clear old items (keep tablecloth)
+    // Clear old items (keep tablecloth if it was part of HTML, but here we clear all placed-items)
     const existing = table.querySelectorAll('.placed-item');
     existing.forEach(e => e.remove());
 
-    placedItems.forEach(pi => {
-        const itemDef = ITEMS.find(i => i.id === pi.itemId);
+    placedItems.forEach(entity => {
+        if (entity.type === 'basket') {
+            renderBasket(table, entity);
+        } else {
+            renderLooseItem(table, entity);
+        }
+    });
+}
+
+function renderBasket(container, basketData) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'placed-item basket-wrapper';
+
+    // Position
+    const left = 300 + basketData.x - 50; // Basket is approx 100x100? SVG is 100x100
+    const top = 300 + basketData.y - 50;
+
+    wrapper.style.left = `${left}px`;
+    wrapper.style.top = `${top}px`;
+    wrapper.style.width = '100px';
+    wrapper.style.height = '100px';
+    wrapper.style.transform = `rotate(${basketData.rotation}deg)`;
+    wrapper.style.cursor = 'grab';
+
+    // 1. Render Basket SVG
+    const basketSvg = ITEM_ASSETS.basket; // Assuming this exists now
+    // We want the basket BG, then items, then basket rim? 
+    // The current SVG likely has BG and Rim in one. 
+    // Simply placing items on top is fine for 2D.
+
+    wrapper.innerHTML = basketSvg;
+
+    // 2. Render Contents
+    const contentContainer = document.createElement('div');
+    contentContainer.style.position = 'absolute';
+    contentContainer.style.top = '0';
+    contentContainer.style.left = '0';
+    contentContainer.style.width = '100%';
+    contentContainer.style.height = '100%';
+    contentContainer.style.pointerEvents = 'none'; // Click through to basket for dragging
+
+    basketData.contents.forEach((c, index) => {
+        const itemDef = ITEMS.find(i => i.id === c.itemId);
         if (!itemDef) return;
 
-        const el = document.createElement('div');
-        el.className = 'placed-item';
-        el.innerHTML = itemDef.asset;
+        const itemEl = document.createElement('div');
+        itemEl.style.position = 'absolute';
+        itemEl.style.width = '60px'; // Items are smaller inside basket
+        itemEl.style.height = '60px';
 
-        // Center of table is (0,0) conceptually, but HTML is top-left based
-        // Table is 600x600, center is 300,300. Item is 80x80 (center 40,40)
-        // We set initial position
-        const left = 300 + pi.x - 40;
-        const top = 300 + pi.y - 40;
+        // Calculate offset based on triforce pattern
+        let dx = 0, dy = 0;
+        const dist = 20;
+        if (index === 0) { dx = 0; dy = -dist; }
+        else if (index === 1) { dx = dist; dy = dist / 2; }
+        else if (index === 2) { dx = -dist; dy = dist / 2; }
 
-        el.style.left = `${left}px`;
-        el.style.top = `${top}px`;
-        el.style.transform = `rotate(${pi.rotation}deg)`;
-        el.style.cursor = 'grab'; // Indicate draggable
+        // Center is 50,50. Item center is 30,30
+        const ix = 50 + dx - 30;
+        const iy = 50 + dy - 30;
 
-        // Make draggable
-        enableDrag(el, pi);
+        itemEl.style.left = `${ix}px`;
+        itemEl.style.top = `${iy}px`;
+        itemEl.style.transform = `rotate(${c.rotation}deg)`;
+        itemEl.innerHTML = itemDef.asset;
 
-        table.appendChild(el);
+        contentContainer.appendChild(itemEl);
     });
+
+    wrapper.appendChild(contentContainer);
+
+    // Drag Logic
+    enableDrag(wrapper, basketData);
+
+    container.appendChild(wrapper);
+}
+
+function renderLooseItem(container, itemData) {
+    const itemDef = ITEMS.find(i => i.id === itemData.itemId);
+    if (!itemDef) return;
+
+    const el = document.createElement('div');
+    el.className = 'placed-item';
+    el.innerHTML = itemDef.asset;
+
+    // Sizing
+    const size = 80;
+    const offset = size / 2;
+
+    const left = 300 + itemData.x - offset;
+    const top = 300 + itemData.y - offset;
+
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+    el.style.transform = `rotate(${itemData.rotation}deg)`;
+    el.style.cursor = 'grab';
+
+    enableDrag(el, itemData);
+
+    container.appendChild(el);
+}
+
+function autoOrganizeBanquet() {
+    if (placedItems.length === 0) {
+        speak("Table is empty! Buy something first.");
+        return;
+    }
+
+    // 1. Recover all items
+    let allDimSum = [];
+    let allTableware = [];
+
+    placedItems.forEach(entity => {
+        if (entity.type === 'basket') {
+            // Extract contents
+            entity.contents.forEach(c => {
+                // We need to look up the item def to check type? 
+                // Actually we stored itemId. Let's assume all in basket were dimsum.
+                // But better to check.
+                const def = ITEMS.find(i => i.id === c.itemId);
+                if (def) allDimSum.push(def);
+            });
+        } else {
+            // Loose item
+            const def = ITEMS.find(i => i.id === entity.itemId);
+            if (def) {
+                if (def.type === 'dimsum') allDimSum.push(def);
+                else allTableware.push(def);
+            }
+        }
+    });
+
+    // 2. Clear current
+    placedItems = [];
+
+    // 3. Re-distribute Dim Sum into Baskets (groups of 3)
+    // Shuffle slightly for variety? Or keep order? Let's shuffle.
+    // allDimSum.sort(() => Math.random() - 0.5);
+
+    while (allDimSum.length > 0) {
+        const batch = allDimSum.splice(0, BASKET_CAPACITY);
+        const basket = createBasket();
+
+        // We need to position baskets intelligently later. 
+        // For now, let createBasket give random, then we overwrite position.
+
+        batch.forEach(item => {
+            basket.contents.push({
+                itemId: item.id,
+                rotation: Math.random() * 360
+            });
+        });
+
+        placedItems.push(basket);
+    }
+
+    // 4. Re-add Tableware
+    allTableware.forEach(item => {
+        placedItems.push({
+            id: 'item-' + Date.now() + Math.random(),
+            type: 'loose',
+            itemId: item.id,
+            x: 0, y: 0, // Placeholder
+            rotation: Math.random() * 360
+        });
+    });
+
+    // 5. Layout Algorithm (Spiral or Grid)
+    // Center of table is 0,0 (relative to 300,300 center point in our coord system? 
+    // No, our stored x,y are offsets from center 300,300.
+
+    // Arrange Baskets in inner circle/grid
+    const baskets = placedItems.filter(i => i.type === 'basket');
+    const loose = placedItems.filter(i => i.type !== 'basket');
+
+    // Layout Baskets
+    if (baskets.length > 0) {
+        // Spiral layout
+        let angle = 0;
+        let radius = 0;
+        const step = 0.5; // Angle step
+        const dist = 110; // Distance between items approx
+
+        baskets.forEach((b, i) => {
+            if (i === 0) {
+                b.x = 0; b.y = 0; // Center first one
+            } else {
+                // Simple circle packing or just random rings?
+                // Let's do a simple ring placement logic
+                // Max 6 in first ring (radius 120), then rest in second (radius 220)
+
+                if (i <= 6) {
+                    const ringAngle = ((i - 1) / 6) * Math.PI * 2;
+                    b.x = Math.cos(ringAngle) * 120;
+                    b.y = Math.sin(ringAngle) * 120;
+                } else {
+                    const ringAngle = ((i - 7) / 12) * Math.PI * 2;
+                    b.x = Math.cos(ringAngle) * 220;
+                    b.y = Math.sin(ringAngle) * 220;
+                }
+            }
+        });
+    }
+
+    // Layout Loose Items (in gaps or outer ring)
+    if (loose.length > 0) {
+        loose.forEach((l, i) => {
+            // Place in outer ring
+            const ringAngle = (i / loose.length) * Math.PI * 2;
+            const r = 240 + (i % 2) * 40; // Zigzag radius 240-280
+            l.x = Math.cos(ringAngle) * r;
+            l.y = Math.sin(ringAngle) * r;
+        });
+    }
+
+    saveProgress();
+    renderBanquet();
+    playDing();
+    speak("Table organized! So tidy.");
 }
 
 function enableDrag(el, itemData) {
@@ -1241,59 +1621,73 @@ function enableDrag(el, itemData) {
     let startX, startY;
     let initialLeft, initialTop;
 
-    el.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
+    const onMouseDown = (e) => {
+        // Support touch?
+        const clientX = e.clientX || e.touches[0].clientX;
+        const clientY = e.clientY || e.touches[0].clientY;
 
-        // Get current computed style positions
+        isDragging = true;
+        startX = clientX;
+        startY = clientY;
+
         initialLeft = parseFloat(el.style.left);
         initialTop = parseFloat(el.style.top);
 
         el.style.cursor = 'grabbing';
-        el.style.zIndex = 1000; // Bring to front while dragging
-
-        // Disable text selection during drag
+        el.style.zIndex = 1000;
         document.body.style.userSelect = 'none';
-    });
 
-    window.addEventListener('mousemove', (e) => {
+        e.stopPropagation(); // Prevent bg click
+    };
+
+    const onMouseMove = (e) => {
         if (!isDragging) return;
 
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
+        const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+        const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+
+        const dx = clientX - startX;
+        const dy = clientY - startY;
 
         let newLeft = initialLeft + dx;
         let newTop = initialTop + dy;
 
-        // Optional: Bounds checking (Keep within table approx)
-        // Table is 600x600 parent relevant to these coords
-        // Keep center point (newLeft + 40, newTop + 40) within reasonable circle?
-        // Or just rect bounds for simplicity
-
-        // Update DOM
         el.style.left = `${newLeft}px`;
         el.style.top = `${newTop}px`;
-    });
+    };
 
-    window.addEventListener('mouseup', (e) => {
+    const onMouseUp = (e) => {
         if (!isDragging) return;
         isDragging = false;
         el.style.cursor = 'grab';
         el.style.zIndex = '';
         document.body.style.userSelect = '';
 
-        // Update State
-        // Convert DOM position back to center-relative coordinates
-        // left = 300 + x - 40  => x = left + 40 - 300
+        // Save new position
         const finalLeft = parseFloat(el.style.left);
         const finalTop = parseFloat(el.style.top);
 
-        itemData.x = finalLeft + 40 - 300;
-        itemData.y = finalTop + 40 - 300;
+        // Calculate offset (Assuming 100 for basket, 80 for loose)
+        // We know the offset used in render. 
+        // We can just store 'x' as (finalLeft - 300 + offset)
+        // Let's deduce offset from current size or re-calculate.
+        const width = el.getBoundingClientRect().width;
+        const offset = width / 2;
+
+        itemData.x = finalLeft + offset - 300;
+        itemData.y = finalTop + offset - 300;
 
         saveProgress();
-    });
+    };
+
+    el.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+
+    // Touch support basic
+    el.addEventListener('touchstart', onMouseDown);
+    window.addEventListener('touchmove', onMouseMove);
+    window.addEventListener('touchend', onMouseUp);
 }
 
 // Persistence
@@ -1304,7 +1698,8 @@ function saveProgress() {
         revealedAnswers,
         dumplingDollars,
         placedItems,
-        currentLevel // Save level
+        currentLevel, // Save level
+        speechRate // Save speech rate preference
     };
     localStorage.setItem('dimSumData', JSON.stringify(data));
 }
@@ -1320,6 +1715,7 @@ function loadProgress() {
             dumplingDollars = (data.dumplingDollars !== undefined) ? data.dumplingDollars : 500;
             placedItems = data.placedItems || [];
             currentLevel = (data.currentLevel !== undefined) ? data.currentLevel : 0; // Load level
+            speechRate = (data.speechRate !== undefined) ? data.speechRate : 1.0; // Load rate
             return true;
         } catch (e) {
             console.error("Save Load Error", e);
@@ -1330,13 +1726,77 @@ function loadProgress() {
 }
 
 function init() {
+    // Load Save Data
+    const hasSave = loadProgress();
+
     MusicPlayer.init(); // Init Music
     initShop(); // Init Shop
+    renderBanquet(); // Init Banquet (Mini Mode)
+
+    // Hide mic initially
+    if (micBtn) micBtn.classList.add('hidden');
+
+
+    // Banquet Table Click -> Full Mode
+    const banquetArea = document.getElementById('banquet-area');
+    if (banquetArea) {
+        banquetArea.onclick = (e) => {
+            // Only expand if clicking the AREA or TABLE, not buttons inside
+            if (e.target.closest('button') || e.target.closest('.placed-item')) return;
+
+            // If already full mode, do nothing (buttons handle exit)
+            // Or maybe click background to exit?
+            if (!banquetArea.classList.contains('full-mode')) {
+                switchView('banquet');
+            }
+        };
+    }
+
     loadVoices();
     renderSidebar(); // This renders the list but doesn't auto-start
 
     // Home Button logic
     const homeBtn = document.getElementById('home-btn');
+
+    // Speed Toggle Logic
+    const speedSwitch = document.getElementById('speed-switch');
+    const speedLabel = document.getElementById('speed-label');
+
+    if (speedSwitch) {
+        // Set initial state based on loaded data
+        const isTurtle = speechRate < 1.0;
+        speedSwitch.checked = isTurtle;
+        if (speedLabel) speedLabel.textContent = isTurtle ? 'Turtle Mode 🐢' : 'Rabbit Mode 🐰';
+
+        speedSwitch.onchange = () => {
+            if (speedSwitch.checked) {
+                speechRate = 0.7; // Slow
+                if (speedLabel) speedLabel.textContent = 'Turtle Mode 🐢';
+                speak("Turtle mode activated. Slow and steady, darling.");
+            } else {
+                speechRate = 1.0; // Normal
+                if (speedLabel) speedLabel.textContent = 'Rabbit Mode 🐰';
+                speak("Rabbit mode activated. Hop hop hop!");
+            }
+            saveProgress();
+        };
+    }
+
+    // Tiger Mom Toggle Logic
+    const tigerSwitch = document.getElementById('tiger-switch');
+    const tigerLabel = document.getElementById('tiger-label');
+    if (tigerSwitch) {
+        tigerSwitch.onchange = () => {
+            tigerMomMode = tigerSwitch.checked;
+            if (tigerMomMode) {
+                if (tigerLabel) tigerLabel.textContent = 'Tiger Mode 🐯';
+                speak("Aiya. Finally. Now we play seriously.", false, null, true);
+            } else {
+                if (tigerLabel) tigerLabel.textContent = 'Tiger Mom 🐯';
+                speak("Okay, back to nice mode.", false, null, true);
+            }
+        };
+    }
     if (homeBtn) {
         homeBtn.onclick = () => {
             const startScreen = document.getElementById('start-screen');
@@ -1388,28 +1848,38 @@ function init() {
     if (micBtn) {
         const newBtn = micBtn.cloneNode(true);
         micBtn.parentNode.replaceChild(newBtn, micBtn);
+        micBtn = newBtn; // Update reference
+
 
         // MOUSE
         newBtn.addEventListener('mousedown', (e) => {
             e.preventDefault(); // prevent focus issues
+            newBtn.classList.add('pressed'); // Force visual feedback
             startListening();
         });
-        newBtn.addEventListener('mouseup', stopListening);
-        newBtn.addEventListener('mouseleave', stopListening);
+        newBtn.addEventListener('mouseup', () => {
+            newBtn.classList.remove('pressed');
+            stopListening();
+        });
+        newBtn.addEventListener('mouseleave', () => {
+            newBtn.classList.remove('pressed');
+            stopListening();
+        });
 
         // TOUCH
         newBtn.addEventListener('touchstart', (e) => {
             e.preventDefault(); // prevent mouse emulation
+            newBtn.classList.add('pressed'); // Force visual feedback
             startListening();
         });
         newBtn.addEventListener('touchend', (e) => {
             e.preventDefault();
+            newBtn.classList.remove('pressed');
             stopListening();
         });
     }
 
-    // Load Save Data
-    const hasSave = loadProgress();
+
 
     // Start Screen Logic
     const startBtn = document.getElementById('start-game-btn');
