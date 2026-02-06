@@ -101,6 +101,12 @@
                 <div class="btn-glow"></div>
             </button>
 
+            <!-- New Shop Entry -->
+            <button id="start-shop-btn" class="secondary-btn"
+                style="margin-top: 1rem; border-color: rgba(255,255,255,0.3);">
+                Customize Banquet 🥟
+            </button>
+
             <p class="start-note">Microphone required • Canto Learning</p>
         </div>
     </div>
@@ -259,19 +265,65 @@
                 </div>
             </div>
 
-            <!-- Round Summary Modal -->
-            <div id="round-summary-modal" class="modal-overlay hidden">
-                <div class="modal-content summary-modal">
-                    <h2 id="summary-title" style="color: #fbbf24; font-size: 2.5rem; margin-bottom: 1rem;">Round
-                        Complete!</h2>
-                    <div class="summary-details" style="text-align: center; margin-bottom: 2rem;">
-                        <p style="font-size: 1.2rem; color: #cbd5e1;">Score for this round:</p>
-                        <div id="round-score-display" class="highlight-score"
-                            style="font-size: 4rem; font-weight: 900; color: white; text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);">
-                            0</div>
+            <!-- Round Summary Screen (New Design) -->
+            <div id="round-summary-screen" class="hidden">
+                <!-- Reusing start-screen styling logic via CSS or by copying classes if they are not ID dominant. 
+                      Actually start-screen uses ID #start-screen for fixed positioning. 
+                      We need to ensure #round-summary-screen has the same styles. -->
+
+                <div class="start-content">
+                    <div class="start-logo">
+                        <span class="logo-top">Dim</span>
+                        <span class="logo-main">Sum Mom</span>
                     </div>
-                    <button id="next-round-btn" class="action-btn" style="font-size: 1.5rem; padding: 1rem 3rem;">Next
-                        Course 🥟</button>
+
+                    <div class="mascot-container">
+                        <!-- Cute Steamer Basket SVG (Simplified or same) -->
+                        <svg width="150" height="150" viewBox="0 0 200 200" fill="none"
+                            xmlns="http://www.w3.org/2000/svg" class="bounce-anim">
+                            <path d="M40,120 L50,180 Q100,190 150,180 L160,120 Z" fill="#fde68a" stroke="#d97706"
+                                stroke-width="4" />
+                            <path d="M40,140 Q100,150 160,140" fill="none" stroke="#d97706" stroke-width="3" />
+                            <ellipse cx="100" cy="120" rx="60" ry="15" fill="#fef3c7" stroke="#d97706"
+                                stroke-width="4" />
+                            <circle cx="80" cy="100" r="25" fill="#fff" stroke="#cbd5e1" stroke-width="2" />
+                            <circle cx="120" cy="100" r="25" fill="#fff" stroke="#cbd5e1" stroke-width="2" />
+                            <!-- Happy Eyes -->
+                            <path d="M70,95 Q80,85 90,95" stroke="#333" stroke-width="3" fill="none" />
+                            <path d="M110,95 Q120,85 130,95" stroke="#333" stroke-width="3" fill="none" />
+                            <!-- Steam -->
+                            <path d="M100,50 Q110,30 100,10" stroke="white" stroke-width="4" stroke-linecap="round"
+                                opacity="0.6" class="steam-anim" />
+                        </svg>
+                    </div>
+
+                    <h2 style="font-size: 2.5rem; color: #fbbf24; margin: 0;">Round Complete!</h2>
+
+                    <div class="summary-details" style="text-align: center; margin: 1rem 0;">
+                        <p style="font-size: 1.2rem; color: #cbd5e1; margin-bottom: 0.5rem;">Round Score</p>
+                        <div id="round-score-display" class="highlight-score"
+                            style="font-size: 5rem; font-weight: 900; color: white; text-shadow: 0 0 25px rgba(251, 191, 36, 0.6); line-height: 1;">
+                            0
+                        </div>
+                        <p style="font-size: 1rem; color: #94a3b8; margin-top: 1rem;">Total Score: <span
+                                id="summary-total-score">0</span></p>
+                    </div>
+
+                    <p id="round-feedback-text"
+                        style="font-size: 1.1rem; color: #e2e8f0; font-style: italic; max-width: 400px;">
+                        "Not bad, darling. Not bad."
+                    </p>
+
+                    <div class="summary-actions"
+                        style="display:flex; gap:1rem; justify-content:center; margin-top: 2rem;">
+                        <button id="next-round-btn" class="start-btn">
+                            Next Course 🥟
+                            <div class="btn-glow"></div>
+                        </button>
+                        <button id="summary-shop-btn" class="secondary-btn">
+                            Visit Shop 🛒
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -362,12 +414,14 @@
 
                 <div class="command-bar">
                     <!-- Language Toggle -->
-                    <div class="lang-toggle">
-                        <span id="lang-label">Cantonese</span>
-                        <label class="switch">
-                            <input type="checkbox" id="lang-switch" checked>
-                            <span class="slider round"></span>
-                        </label>
+                    <div class="left-controls">
+                        <div class="lang-toggle">
+                            <span id="lang-label">Cantonese</span>
+                            <label class="switch">
+                                <input type="checkbox" id="lang-switch" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
                     </div>
 
                     <!-- Mic Button (Center Floating) -->

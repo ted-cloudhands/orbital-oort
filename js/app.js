@@ -58,12 +58,61 @@ function loadVoices() {
 // Sidebar
 function renderSidebar() {
     chapterNav.innerHTML = '';
-    gameData.forEach((round, index) => {
-        const btn = document.createElement('button');
-        btn.className = 'topic-btn';
-        btn.textContent = `${index + 1}. ${round.title}`;
-        btn.onclick = () => startRound(round.id);
-        chapterNav.appendChild(btn);
+
+    // Group by Difficulty
+    const groups = {};
+    gameData.forEach(round => {
+        if (!groups[round.difficulty]) groups[round.difficulty] = [];
+        groups[round.difficulty].push(round);
+    });
+
+    // Render Groups
+    Object.keys(groups).sort((a, b) => a - b).forEach(diffLevel => {
+        const rounds = groups[diffLevel];
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'round-group';
+
+        const header = document.createElement('div');
+        header.className = 'group-header';
+        header.textContent = `Level ${diffLevel}`;
+        // Optionally add description from DIFFICULTY_DESCS
+        // but keep it compact for now
+
+        groupDiv.appendChild(header);
+
+        rounds.forEach((round, index) => {
+            const btn = document.createElement('div'); // Using div for complex layout, clickable
+            btn.className = 'round-card';
+
+            // Check status
+            const isPlayed = playedRounds.includes(round.id);
+            const isCurrent = currentRound && currentRound.id === round.id;
+
+            if (isPlayed) btn.classList.add('completed');
+            if (isCurrent) btn.classList.add('active');
+
+            // Card Content
+            btn.innerHTML = `
+                <div class="round-info">
+                    <span class="round-title">${round.title}</span>
+                </div>
+                <div class="round-status">
+                    ${isPlayed ? '✅' : '○'}
+                </div>
+            `;
+
+            btn.onclick = () => {
+                startRound(round.id);
+                // Re-render to update 'active' state visually immediately
+                renderSidebar();
+                // Close sidebar on mobile/narrow screens if needed, 
+                // but for now keeping it open or letting user close it.
+            };
+
+            groupDiv.appendChild(btn);
+        });
+
+        chapterNav.appendChild(groupDiv);
     });
 }
 
@@ -72,7 +121,10 @@ let playedRounds = [];
 
 function startRound(id, isGameStart = false) {
     currentRound = gameData.find(r => r.id === id);
-    if (!playedRounds.includes(id)) playedRounds.push(id);
+    if (!playedRounds.includes(id)) {
+        playedRounds.push(id);
+        saveProgress(); // Save that we started/played this round
+    }
 
     revealedAnswers = [];
     currentRoundScore = 0; // Reset for new round
@@ -272,10 +324,15 @@ function renderBoard() {
 }
 
 // Logic
-let practiceTarget = null;
+// Logic
+let practiceTarget = null; // Currently selected card to practice
 let silenceTimer = null;
-let transcriptBuffer = "";
+// let transcriptBuffer = ""; // (Already defined in setupSpeechRecognition block? No, restore it here)
+// Actually, let's keep them global as they are used in multiple places
+let fullTranscript = "";
+let currentSessionText = "";
 let ttsActive = false;
+let transcriptBuffer = ""; // Restoring legacy name if used elsewhere
 
 function activateNextAnswer() {
     // Find the NEXT available card in the DOM sequence (visual order)
@@ -312,30 +369,49 @@ function activateCard(ans) {
     // Speak it
     speak(ans.canto, false, () => {
         // ONLY start listening when the prompt is done speaking!
-        statusText.textContent = "Your turn...";
-        setTimeout(startListening, 200);
+        // PTT UPDATE: DO NOT AUTO START. Wait for user.
+        statusText.textContent = "Hold Mic to Speak";
+        // setTimeout(startListening, 200); // <-- REMOVED
     });
 
     statusText.textContent = "Listen...";
 }
 
 function showRoundSummary() {
-    const modal = document.getElementById('round-summary-modal');
-    const scoreDisplay = document.getElementById('round-score-display');
+    const screen = document.getElementById('round-summary-screen');
+    const roundScoreDisplay = document.getElementById('round-score-display');
+    const totalScoreDisplay = document.getElementById('summary-total-score');
+    const feedbackText = document.getElementById('round-feedback-text');
     const nextBtn = document.getElementById('next-round-btn');
 
-    // Update score
-    scoreDisplay.textContent = currentRoundScore;
+    // Update scores
+    roundScoreDisplay.textContent = currentRoundScore;
+    if (totalScoreDisplay) totalScoreDisplay.textContent = totalScore;
 
-    // Show modal
-    modal.classList.remove('hidden');
+    // Random Mom Feedback
+    const feedbacks = [
+        "Not bad, but can be better.",
+        "You earned your dim sum today.",
+        "Grandmother would be... satisfied.",
+        "Keep practicing, darling.",
+        "Aiya, at least you tried!",
+        "Better than your cousin... maybe.",
+        "Your tones are improving!",
+        "Time for the next course!"
+    ];
+    if (feedbackText) {
+        feedbackText.textContent = `"${feedbacks[Math.floor(Math.random() * feedbacks.length)]}"`;
+    }
+
+    // Show screen
+    screen.classList.remove('hidden');
 
     // Speak
     speak(`Round complete! You earned ${currentRoundScore} points. Ready for the next course?`);
 
-    // Handle click (ensure one listener)
+    // Handle click (ensure one listener replacement)
     nextBtn.onclick = () => {
-        modal.classList.add('hidden');
+        screen.classList.add('hidden');
         nextRandomRound();
     };
 }
@@ -509,6 +585,9 @@ function success(answer, grade, spokenText = "") {
     // Bonus for perfect score
     if (grade >= 95) totalScore += 10;
 
+    saveProgress(); // Save score update
+
+
     // Animate the score update
     // Grab current value safely (from first display)
     const currentVal = parseInt(scoreDisplays[0]?.innerText.replace(/[^0-9]/g, '') || '0');
@@ -521,6 +600,7 @@ function success(answer, grade, spokenText = "") {
         currentLevel = newLevel;
         updateLevelUI();
         speak(`Level Up! You are now level ${currentLevel}. ${DIFFICULTY_DESCS[currentLevel]}`);
+        saveProgress(); // Save level up
     }
 
     playDing();
@@ -582,95 +662,112 @@ function updateLangUI() {
 }
 
 // Speech Recon
+// Speech Recon
 function setupSpeechRecognition() {
-    // Cross-Browser Support
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (SpeechRecognition) {
         recognition = new SpeechRecognition();
-        recognition.continuous = false; // ONE SHOT ONLY - Key for "Context Aware"
+        recognition.continuous = true; // KEEP LISTENING while holding
         recognition.interimResults = true;
 
-        // Initialize based on switch
         const isCanto = langSwitch ? langSwitch.checked : false;
         recognition.lang = isCanto ? 'zh-HK' : 'en-US';
 
         recognition.onstart = () => {
-            isListening = true;
-            const btn = document.getElementById('mic-btn');
-            if (btn) btn.classList.add('listening');
+            if (isListening) {
+                const btn = document.getElementById('mic-btn');
+                if (btn) btn.classList.add('listening');
 
-            const langName = recognition.lang === 'en-US' ? 'English' : 'Cantonese';
-            statusText.textContent = `Listening (${langName})...`;
-            statusText.style.color = '#22d3ee'; // Cyan text
-            statusText.style.fontWeight = 'bold';
+                const langName = recognition.lang === 'en-US' ? 'English' : 'Cantonese';
+                statusText.textContent = `Listening (${langName})...`;
+                statusText.style.color = '#22d3ee';
+                statusText.style.fontWeight = 'bold';
+            }
         };
 
         recognition.onresult = (event) => {
-            // Safety check: Ignore ALL input while Avatar is speaking
+            // Safety check: ignore while Avatar is speaking
             if (ttsActive) return;
 
-            let interim = '';
-            let newFinal = '';
+            let currentSessionText = '';
 
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    newFinal += event.results[i][0].transcript;
-                } else {
-                    interim += event.results[i][0].transcript;
+            // Iterate ALL results to rebuild the session transcript
+            if (event.results && event.results.length > 0) {
+                for (let i = 0; i < event.results.length; ++i) {
+                    const res = event.results[i];
+                    if (res && res.length > 0 && res[0].transcript) {
+                        currentSessionText += res[0].transcript;
+                    }
                 }
             }
 
-            // Visual feedback
-            liveSubtitle.textContent = newFinal + interim;
+            // CRITICAL FIX: Only update buffer if we have valid text.
+            // This prevents an empty "Final" result (Conf: 0) from wiping out 
+            // a valid "Interim" result we just captured.
+            if (currentSessionText.trim().length > 0) {
+                transcriptBuffer = currentSessionText;
 
-            // For one-shot, we usually just take the final result directly
-            if (newFinal) {
-                statusText.textContent = "Processing...";
-                handleInput(newFinal);
+                // Visual feedback
+                liveSubtitle.textContent = transcriptBuffer;
+                statusText.textContent = "Listening...";
+                statusText.style.color = '#22d3ee';
+            } else {
+                // We received an empty result. Ignore it to preserve our buffer.
+                // This often happens when the browser finalizes a "noise" input.
             }
         };
 
         recognition.onerror = (e) => {
             console.log("Mic Error", e);
-            isListening = false; // Reset state
-            const btn = document.getElementById('mic-btn');
-            if (btn) btn.classList.remove('listening');
-
             if (e.error === 'no-speech') {
-                statusText.textContent = "Didn't hear anything. Tap to try again.";
-                statusText.style.color = 'var(--text-muted)';
-            } else {
-                statusText.textContent = "Mic Error: " + e.error;
+                // Ignore
+            } else if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                isListening = false;
+                updateMicUI(false);
+                statusText.textContent = "Mic Denied";
             }
         };
 
         recognition.onend = () => {
-            // Logic: If we are SUPPOSED to be listening (isListening=true) and it stopped 
-            // without a result (like silence timeout), we might want to prompt user.
-            // But since continuous=false, it WILL stop after one sentence.
+            console.log("Recognition END. Buffer:", transcriptBuffer, "isListening:", isListening);
 
-            isListening = false;
-            const btn = document.getElementById('mic-btn');
-            if (btn) btn.classList.remove('listening');
-
-            // If we didn't just process an answer (e.g. timeout), show idle
-            if (!ttsActive) {
-                // If we finished successfully, handleInput would have called TTS
-                // If we are here, it means we stopped listening.
-                // We leave the status text as is (likely "Processing" or error state) 
-                // OR reset to idle if nothing happened.
-                if (statusText.textContent.includes("Listening")) {
-                    statusText.textContent = "Tap Mic to Answer";
-                    statusText.style.color = 'var(--text-muted)';
-                    statusText.style.fontWeight = 'normal';
+            // If we stopped naturally?
+            // If isListening is TRUE, it means we didn't release button yet => Restart
+            if (isListening) {
+                console.log("End but still holding - Restarting");
+                try { recognition.start(); } catch (e) { }
+            } else {
+                // We stopped because we released button.
+                // SUBMIT NOW!
+                if (transcriptBuffer.trim().length > 0) {
+                    statusText.textContent = "Processing...";
+                    console.log("Submitting:", transcriptBuffer);
+                    handleInput(transcriptBuffer);
+                } else {
+                    console.log("Buffer empty, ignoring.");
+                    updateMicUI(false);
                 }
+                transcriptBuffer = ""; // Clear
             }
         };
 
     } else {
         alert("Browser does not support Speech API.");
-        statusText.textContent = "Not Supported";
+    }
+}
+
+function updateMicUI(listening) {
+    const btn = document.getElementById('mic-btn');
+    if (btn) {
+        if (listening) btn.classList.add('listening');
+        else btn.classList.remove('listening');
+    }
+
+    if (!listening) {
+        statusText.textContent = "Tap Mic to Answer";
+        statusText.style.color = 'var(--text-muted)';
+        statusText.style.fontWeight = 'normal';
     }
 }
 
@@ -682,22 +779,39 @@ function toggleListening() {
     }
 }
 
-// ... (previous code)
+// function toggleListening() { ... } // DEPRECATED
 
 function startListening() {
-    if (recognition && !isListening) {
-        try {
-            recognition.start();
-            playBong(600, 0.1); // High pitch for ON
-        } catch (e) { }
+    // PTT: Only start if not already listening
+    if (!recognition) return;
+    if (isListening) return;
+
+    isListening = true;
+    transcriptBuffer = ""; // Reset buffer
+    updateMicUI(true); // Visuals immediately
+
+    // Check if already started?
+    try {
+        recognition.start();
+        // playBong(600, 0.1); // DEBUG: Comment out to rule out audio interference
+    } catch (e) {
+        // usually means already started or transient error
+        // console.log("Start error:", e);
     }
 }
 
 function stopListening() {
+    // PTT: Stop immediately on release
+    if (!isListening) return;
+
+    isListening = false;
+    // updateMicUI(false); // Do not reset UI immediately, let onend handle it (so we show "Processing...")
+
     if (recognition) {
-        recognition.stop();
-        isListening = false;
-        playBong(400, 0.1); // Low pitch for OFF
+        try {
+            recognition.stop();
+        } catch (e) { }
+        playBong(400, 0.1);
     }
 }
 
@@ -950,9 +1064,13 @@ function updateShopUI() {
     if (convBtn) convBtn.disabled = totalScore < 100;
 }
 
+let previousView = 'game'; // Track where we came from
+
 function switchView(viewName) {
     const banquetArea = document.getElementById('banquet-area');
     const shopModal = document.getElementById('shop-modal');
+    const startScreen = document.getElementById('start-screen');
+    const summaryScreen = document.getElementById('round-summary-screen');
 
     // Reset buttons
     document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.remove('active'));
@@ -961,6 +1079,16 @@ function switchView(viewName) {
         banquetArea.classList.remove('visible');
         shopModal.classList.remove('visible');
         document.getElementById('nav-home-btn').classList.add('active');
+
+        // If returning to game, ensure overlays are handled correctly
+        // But if we came from StartScreen, we might want to go BACK to StartScreen?
+        if (previousView === 'start') {
+            startScreen.style.display = 'flex';
+            startScreen.style.opacity = '1';
+        } else if (previousView === 'summary') {
+            summaryScreen.classList.remove('hidden');
+        }
+
     } else if (viewName === 'banquet') {
         banquetArea.classList.add('visible');
         shopModal.classList.remove('visible');
@@ -971,6 +1099,23 @@ function switchView(viewName) {
         shopModal.classList.add('visible');
         document.getElementById('nav-shop-btn').classList.add('active');
     }
+}
+
+// Helper to open shop/banquet keeping context
+function openShopFrom(source) {
+    previousView = source;
+
+    // If coming from start/summary, we might want to hide them temporarily?
+    // Or just let the shop modal overlaid on top (z-index is high).
+    // Let's rely on Z-Index overlay for simplicity, but if we switch to 'banquet' (full screen),
+    // we need to make sure the start screen doesn't block clicks if it's below.
+
+    // Actually, banquet-area is absolute/fixed top 0.
+    // If start-screen is z-index 2000, banquet needs to be higher?
+    // Let's checking CSS.
+
+    // For now, let's switch to 'banquet' view directly for "Customize Banquet"
+    switchView('banquet');
 }
 
 function initShop() {
@@ -1158,7 +1303,8 @@ function saveProgress() {
         playedRounds,
         revealedAnswers,
         dumplingDollars,
-        placedItems
+        placedItems,
+        currentLevel // Save level
     };
     localStorage.setItem('dimSumData', JSON.stringify(data));
 }
@@ -1173,6 +1319,7 @@ function loadProgress() {
             revealedAnswers = data.revealedAnswers || [];
             dumplingDollars = (data.dumplingDollars !== undefined) ? data.dumplingDollars : 500;
             placedItems = data.placedItems || [];
+            currentLevel = (data.currentLevel !== undefined) ? data.currentLevel : 0; // Load level
             return true;
         } catch (e) {
             console.error("Save Load Error", e);
@@ -1237,11 +1384,28 @@ function init() {
         };
     }
 
-    // Toggle Mic
+    // Toggle Mic -> Hold Mic
     if (micBtn) {
         const newBtn = micBtn.cloneNode(true);
         micBtn.parentNode.replaceChild(newBtn, micBtn);
-        newBtn.addEventListener('click', toggleListening);
+
+        // MOUSE
+        newBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // prevent focus issues
+            startListening();
+        });
+        newBtn.addEventListener('mouseup', stopListening);
+        newBtn.addEventListener('mouseleave', stopListening);
+
+        // TOUCH
+        newBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // prevent mouse emulation
+            startListening();
+        });
+        newBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            stopListening();
+        });
     }
 
     // Load Save Data
@@ -1291,6 +1455,25 @@ function init() {
 
             // 4. Start Game Logic
             nextRandomRound(); // Use nextRandomRound to respect difficulty
+        };
+    }
+
+    // New: Start Screen Shop Button
+    const startShopBtn = document.getElementById('start-shop-btn');
+    if (startShopBtn) {
+        startShopBtn.onclick = () => {
+            // Hide start screen temporarily or just overlay?
+            // Since banquet is full screen opaque, we can just show it.
+            // But we need z-index > start-screen (2000).
+            openShopFrom('start');
+        };
+    }
+
+    // New: Summary Screen Shop Button
+    const summaryShopBtn = document.getElementById('summary-shop-btn');
+    if (summaryShopBtn) {
+        summaryShopBtn.onclick = () => {
+            openShopFrom('summary');
         };
     }
 
