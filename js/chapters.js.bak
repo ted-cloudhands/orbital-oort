@@ -581,17 +581,5 @@ export const gameData = [
             { id: 1, canto: '道可道非常道', pinyin: 'Dou Ho Dou Fei Seung Dou', english: 'The Tao that can be told is not the eternal Tao', score: 60 },
             { id: 2, canto: '上善若水', pinyin: 'Soeng Sin Joek Seoi', english: 'Highest good is like water', score: 40 }
         ]
-    },
-    {
-        id: "t0_4",
-        difficulty: 0,
-        title: "Simple Verbs (動作)",
-        question: { canto: "日常會做咩動作？", pinyin: "Yat Seung Wui Zou Me Dung Zok?", english: "Daily actions?" },
-        answers: [
-            { id: 1, canto: "食", pinyin: "Sik", english: "Eat", score: 30 },
-            { id: 2, canto: "飲", pinyin: "Yam", english: "Drink", score: 30 },
-            { id: 3, canto: "瞓", pinyin: "Fan", english: "Sleep", score: 25 },
-            { id: 4, canto: "行", pinyin: "Haang", english: "Walk", score: 15 }
-        ]
     }
 ];

@@ -1,5 +1,7 @@
 import { gameData } from './chapters.js';
 import { ITEMS, ITEM_ASSETS } from './items.js';
+import { pinyinMap, toPhoneticEnglish } from './pinyinHelper.js';
+import { TTS_CONFIG } from './tts-config.js';
 
 // State
 let currentRound = null;
@@ -7,16 +9,19 @@ let totalScore = 0;
 let currentRoundScore = 0; // Track score just for this round
 let currentLevel = 0; // The difficulty level (0-10)
 let revealedAnswers = []; // IDs of answers "completed"
+let questionHistory = {}; // Track all attempts: { questionKey: [{ timestamp, score, userInput, grade }] }
 let isListening = false;
 let recognition = null;
 let synthesis = window.speechSynthesis;
 let voices = [];
 let finalVoice = null;
 let speechRate = 1.0; // Default: Rabbit Mode (Normal)
+let audioContext = null;
 
 // DOM Elements
 const chapterNav = document.getElementById('chapter-nav');
 const scoreDisplays = document.querySelectorAll('.total-score-display');
+const roundScoreDisplay = document.getElementById('current-round-display');
 const gameBoard = document.getElementById('game-board');
 const questionText = document.getElementById('question-text');
 const questionSub = document.getElementById('question-sub');
@@ -58,15 +63,29 @@ const DIFFICULTY_DESCS = {
 function loadVoices() {
     voices = synthesis.getVoices();
 
-    // Select Cantonese Voice
-    finalVoice = voices.find(v => v.lang === 'zh-HK');
-    if (!finalVoice) finalVoice = voices.find(v => v.lang === 'zh-TW');
-    if (!finalVoice) finalVoice = voices.find(v => v.lang.startsWith('zh'));
+    // Strategy 1: Look for high-quality Cantonese voices (HK)
+    const hkVoices = voices.filter(v => v.lang === 'zh-HK' || v.lang === 'zh_HK');
+
+    // Priority: Neural/Natural -> Google -> Local/System
+    finalVoice = hkVoices.find(v => v.name.toLowerCase().includes('neural') || v.name.toLowerCase().includes('natural')) ||
+        hkVoices.find(v => v.name.toLowerCase().includes('google')) ||
+        hkVoices[0];
+
+    // Strategy 2: Fallback to Taiwan (TW) if HK is missing
+    if (!finalVoice) {
+        const twVoices = voices.filter(v => v.lang.startsWith('zh-TW'));
+        finalVoice = twVoices.find(v => v.name.toLowerCase().includes('google')) || twVoices[0];
+    }
+
+    // Strategy 3: Fallback to any Chinese
+    if (!finalVoice) {
+        finalVoice = voices.find(v => v.lang.startsWith('zh'));
+    }
 
     if (finalVoice) {
-        console.log("Voice loaded:", finalVoice.name);
+        console.log("Optimal Cantonese Voice selected:", finalVoice.name, finalVoice.lang);
     } else {
-        console.warn("No suitable Cantonese voice found.");
+        console.warn("No suitable Cantonese voice found on this device.");
     }
 }
 
@@ -183,6 +202,10 @@ function startRound(id, isGameStart = false) {
 
     revealedAnswers = [];
     currentRoundScore = 0; // Reset for new round
+    if (roundScoreDisplay) {
+        roundScoreDisplay.textContent = '0';
+        roundScoreDisplay.classList.remove('pulse');
+    }
     if (micBtn) micBtn.classList.add('hidden'); // Ensure mic is hidden at start of round
 
 
@@ -190,7 +213,8 @@ function startRound(id, isGameStart = false) {
     questionText.textContent = currentRound.question.canto;
     questionText.style.cursor = 'pointer';
     questionText.onclick = () => speak(currentRound.question.canto, false, null, true);
-    questionSub.textContent = `${currentRound.question.pinyin} - ${currentRound.question.english}`;
+    const qPinyin = getAccentedPinyin(currentRound.question.canto, currentRound.question.pinyin);
+    questionSub.textContent = `${qPinyin} — ${currentRound.question.english}`;
 
     // Speak the question, then start the first answer!
     // Intro Phrase first (Custom if first round of session)
@@ -364,7 +388,13 @@ function renderBoard() {
 
         // Click to practice
         card.style.cursor = 'pointer';
-        card.onclick = () => activateCard(ans);
+        card.onclick = (e) => {
+            // Don't activate card if clicking progress button
+            if (e.target.closest('.progress-btn')) {
+                return;
+            }
+            activateCard(ans);
+        };
 
         if (revealedAnswers.includes(ans.id)) {
             card.classList.add('completed');
@@ -373,9 +403,14 @@ function renderBoard() {
         // Content
         const textGroup = document.createElement('div');
         textGroup.className = 'text-group';
+
+        const accentedPinyin = getAccentedPinyin(ans.canto, ans.pinyin);
+        const phoneticEnglish = toPhoneticEnglish(ans.pinyin);
+
         textGroup.innerHTML = `
-            <div class="answer-text">${ans.english}</div>
-            <div class="answer-sub">${ans.canto} <span style="font-size:0.8em; opacity:0.7">(${ans.pinyin})</span></div>
+            <div class="answer-row chinese">${ans.canto}</div>
+            <div class="answer-row pinyin">${accentedPinyin} / ${phoneticEnglish}</div>
+            <div class="answer-row english">${ans.english}</div>
         `;
 
         const scoreDiv = document.createElement('div');
@@ -386,6 +421,19 @@ function renderBoard() {
 
         card.appendChild(textGroup);
         card.appendChild(scoreDiv);
+
+        // Add progress button if there's history for this question
+        const questionKey = `${currentRound.id}_ans_${ans.id}`;
+        if (questionHistory[questionKey] && questionHistory[questionKey].length > 0) {
+            const progressBtn = document.createElement('button');
+            progressBtn.className = 'progress-btn';
+            progressBtn.innerHTML = '📊';
+            progressBtn.onclick = (e) => {
+                e.stopPropagation();
+                showScoreHistory(ans, questionHistory[questionKey]);
+            };
+            card.appendChild(progressBtn);
+        }
 
         slot.appendChild(card);
         gameBoard.appendChild(slot);
@@ -508,6 +556,16 @@ function showRoundSummary() {
         screen.classList.add('hidden');
         nextRandomRound();
     };
+
+    // Show/hide history button based on whether any questions have history
+    const historyBtn = document.getElementById('view-history-btn');
+    if (historyBtn) {
+        const hasAnyHistory = currentRound.answers.some(ans => {
+            const questionKey = `${currentRound.id}_ans_${ans.id}`;
+            return questionHistory[questionKey] && questionHistory[questionKey].length > 0;
+        });
+        historyBtn.style.display = hasAnyHistory ? 'block' : 'none';
+    }
 }
 
 const FEEDBACK_PHRASES = {
@@ -586,7 +644,7 @@ function handleInput(text) {
     if (!practiceTarget) return;
 
     // Filter noise/short sounds
-    if (text.trim().length < 2) return;
+    if (text.trim().length < 1) return;
 
     const lowerText = text.toLowerCase();
 
@@ -608,7 +666,7 @@ function handleInput(text) {
             const targetWords = targetEnglish.split(' ');
             let wordHits = 0;
             targetWords.forEach(w => {
-                if (w.length > 2 && lowerText.includes(w)) wordHits++;
+                if (w.length > 1 && lowerText.includes(w)) wordHits++;
             });
             if (wordHits > 0) {
                 rawScore = (wordHits / targetWords.length) * 80;
@@ -649,7 +707,7 @@ function handleInput(text) {
             targetPinyin.forEach(p => {
                 // Check for exact pinyin syllable match
                 // We use space tokenizer for targetPinyin
-                if (p.length > 1 && lowerText.includes(p)) pinyinMatches++;
+                if (p.length > 0 && lowerText.includes(p)) pinyinMatches++;
             });
 
             if (targetPinyin.length > 0) {
@@ -710,6 +768,18 @@ function success(answer, grade, spokenText = "") {
         }
     }
 
+    // Track question attempt in history
+    const questionKey = `${currentRound.id}_ans_${answer.id}`;
+    if (!questionHistory[questionKey]) {
+        questionHistory[questionKey] = [];
+    }
+    questionHistory[questionKey].push({
+        timestamp: Date.now(),
+        score: grade,
+        userInput: spokenText,
+        grade: grade
+    });
+
     // Use grade directly as points (1-100 score corresponds to quality)
     const earnedPoints = grade; // Direct mapping per user request
 
@@ -721,6 +791,12 @@ function success(answer, grade, spokenText = "") {
 
     saveProgress(); // Save score update
 
+    // Update round score display with pulse animation
+    if (roundScoreDisplay) {
+        roundScoreDisplay.textContent = currentRoundScore;
+        roundScoreDisplay.classList.add('pulse');
+        setTimeout(() => roundScoreDisplay.classList.remove('pulse'), 500);
+    }
 
     // Animate the score update
     // Grab current value safely (from first display)
@@ -1032,6 +1108,26 @@ const MusicPlayer = {
     }
 };
 
+function getAccentedPinyin(canto, fallback) {
+    if (pinyinMap[canto]) return pinyinMap[canto];
+    // Simple logic to attempt mapping parts if whole not found (for phrases)
+    let result = [];
+    let chars = canto.split('');
+    let allFound = true;
+    for (let char of chars) {
+        if (pinyinMap[char]) {
+            result.push(pinyinMap[char]);
+        } else if (char === ' ' || char === '，' || char === '？' || char === '！') {
+            result.push(char);
+        } else {
+            allFound = false;
+            break;
+        }
+    }
+    if (allFound && result.length > 0) return result.join(' ');
+    return fallback;
+}
+
 function playBong(freq = 500, duration = 0.5) {
     try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1060,36 +1156,45 @@ function playBong(freq = 500, duration = 0.5) {
 }
 
 // Avatar & TTS
-function speak(text, showBubble = false, onComplete = null, useUserRate = false) {
-    if (!synthesis) return;
-
-    // Create Utterance
-    const utter = new SpeechSynthesisUtterance(text);
-
+async function speak(text, showBubble = false, onComplete = null, useUserRate = false) {
     if (showBubble && avatarBubble) {
         avatarBubble.textContent = text;
         avatarBubble.classList.add('visible');
         setTimeout(() => avatarBubble.classList.remove('visible'), 4000);
     }
 
+    // Cloud TTS Path
+    if (TTS_CONFIG.useCloudTts && TTS_CONFIG.apiKey) {
+        try {
+            await speakCloud(text, onComplete, useUserRate);
+            return;
+        } catch (err) {
+            console.error("Cloud TTS failed, falling back to native:", err);
+        }
+    }
+
+    // Native Web Speech Path
+    if (!synthesis) {
+        if (onComplete) onComplete();
+        return;
+    }
+
+    const utter = new SpeechSynthesisUtterance(text);
     if (finalVoice) {
         utter.voice = finalVoice;
-        utter.rate = useUserRate ? speechRate : 1.0; // modified
+        utter.rate = useUserRate ? speechRate : 1.0;
         utter.pitch = 1.0;
-        // console.log("Speaking with:", finalVoice.name);
-    } else {
-        console.warn("No Cantonese voice found. Using default.");
     }
 
     utter.onstart = () => {
         avatarMouth.classList.add('talking');
         if (avatarContainer) avatarContainer.classList.add('speaking');
+        ttsActive = true;
     };
 
     utter.onboundary = (event) => {
         if (event.name === 'word') {
             avatarMouth.classList.add('pop');
-            // Remove after animation completes
             setTimeout(() => avatarMouth.classList.remove('pop'), 100);
         }
     };
@@ -1098,27 +1203,71 @@ function speak(text, showBubble = false, onComplete = null, useUserRate = false)
         avatarMouth.classList.remove('talking');
         if (avatarContainer) avatarContainer.classList.remove('speaking');
         ttsActive = false;
-
-        // Callback support (e.g., start mic after question)
-        if (onComplete) {
-            onComplete();
-        } else {
-            // If no callback, we usually go back to idle state
-            statusText.textContent = "Tap Mic to Answer";
-        }
+        if (onComplete) onComplete();
+        else statusText.textContent = "Tap Mic to Answer";
     };
 
     utter.onerror = (e) => {
-        if (e.error === 'interrupted' || e.error === 'canceled') {
-            // Normal behavior when cancelling speech
-            return;
+        if (e.error !== 'interrupted' && e.error !== 'canceled') {
+            console.error("TTS Error:", e);
+            if (synthesis.paused) synthesis.resume();
         }
-        console.error("TTS Error:", e);
-        if (synthesis.paused) synthesis.resume();
-        ttsActive = false; // Reset to be safe
+        ttsActive = false;
     };
 
     synthesis.speak(utter);
+}
+
+/**
+ * Cloud TTS implementation using Google Cloud Text-to-Speech API
+ */
+async function speakCloud(text, onComplete, useUserRate) {
+    const rate = useUserRate ? speechRate : 1.0;
+    const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${TTS_CONFIG.apiKey}`;
+
+    const body = {
+        input: { text: text },
+        voice: {
+            languageCode: TTS_CONFIG.google.languageCode,
+            name: TTS_CONFIG.google.voice
+        },
+        audioConfig: {
+            audioEncoding: 'MP3',
+            speakingRate: rate
+        }
+    };
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+
+    if (!response.ok) throw new Error(`Google TTS API error: ${response.statusText}`);
+
+    const data = await response.json();
+    const audioData = Uint8Array.from(atob(data.audioContent), c => c.charCodeAt(0));
+
+    if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await audioContext.decodeAudioData(audioData.buffer);
+
+    const source = audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioContext.destination);
+
+    source.onended = () => {
+        avatarMouth.classList.remove('talking');
+        if (avatarContainer) avatarContainer.classList.remove('speaking');
+        ttsActive = false;
+        if (onComplete) onComplete();
+    };
+
+    // Start UI feedback
+    avatarMouth.classList.add('talking');
+    if (avatarContainer) avatarContainer.classList.add('speaking');
+    ttsActive = true;
+
+    source.start(0);
 }
 
 function playDing() {
@@ -1242,46 +1391,49 @@ function initShop() {
         };
     }
 
-    // 2. Render Shop Grid
-    const grid = document.getElementById('shop-grid');
-    if (grid) {
+    // 2. Render Shop Grid with Tabs
+    let activeCategory = 'steamed'; // Default tab
+
+    // Tab click handlers
+    const setupTabs = () => {
+        document.querySelectorAll('.shop-tab').forEach(tab => {
+            tab.onclick = () => {
+                activeCategory = tab.dataset.category;
+                document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                renderShopGrid();
+            };
+        });
+    };
+
+    // Render grid based on active category
+    const renderShopGrid = () => {
+        const grid = document.getElementById('shop-grid');
+        if (!grid) return;
+
         grid.innerHTML = '';
 
-        // Group Items
-        const groups = { 'dimsum': [], 'tableware': [] };
-        ITEMS.forEach(item => {
-            const type = item.type || 'tableware'; // Default fallback
-            if (!groups[type]) groups[type] = [];
-            groups[type].push(item);
+        // Filter items by active category
+        const filteredItems = ITEMS.filter(item => item.category === activeCategory);
+
+        // Render filtered items
+        filteredItems.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'shop-item';
+            el.id = `shop-item-${item.id}`;
+            el.innerHTML = `
+                <div class="item-visual">${item.asset}</div>
+                <span class="item-name">${item.name}</span>
+                <span class="item-price">${item.price} 🥟</span>
+            `;
+            el.onclick = () => buyItem(item, el);
+            grid.appendChild(el);
         });
+    };
 
-        // Helper to render section
-        const renderSection = (title, items) => {
-            if (items.length === 0) return;
-            const header = document.createElement('h3');
-            header.textContent = title;
-            header.style.width = '100%';
-            header.style.margin = '10px 0 5px 0';
-            header.style.color = '#fbbf24';
-            header.style.fontFamily = "'Noto Sc', sans-serif";
-            grid.appendChild(header);
-
-            items.forEach(item => {
-                const el = document.createElement('div');
-                el.className = 'shop-item';
-                el.innerHTML = `
-                    ${item.asset}
-                    <span class="item-name">${item.name}</span>
-                    <span class="item-price">${item.price} 🥟</span>
-                `;
-                el.onclick = () => buyItem(item);
-                grid.appendChild(el);
-            });
-        };
-
-        renderSection("Dim Sum (Steamed)", groups['dimsum']);
-        renderSection("Tableware & Drinks", groups['tableware']);
-    }
+    // Initialize tabs and render
+    setupTabs();
+    renderShopGrid();
 
     // 3. Navigation
     const navHomeBtn = document.getElementById('nav-home-btn');
@@ -1307,9 +1459,15 @@ function initShop() {
     if (autoOrgBtn) autoOrgBtn.onclick = () => autoOrganizeBanquet();
 }
 
-function buyItem(item) {
+function buyItem(item, el) {
     if (dumplingDollars >= item.price) {
         dumplingDollars -= item.price;
+
+        // Visual Feedback on Item
+        if (el) {
+            el.classList.add('purchased-anim');
+            setTimeout(() => el.classList.remove('purchased-anim'), 500);
+        }
 
         if (item.type === 'dimsum') {
             addDimSumToBasket(item);
@@ -1320,9 +1478,9 @@ function buyItem(item) {
         updateShopUI();
         saveProgress();
         playDing(); // Cha-ching!
-        speak(`You bought ${item.name}! Delicious.`);
+        speak(`Excellent choice! ${item.name} added to your banquet.`);
     } else {
-        speak("Too expensive! Save more dumplings.");
+        speak("Aiya! Too expensive. Practice more, earn more!");
     }
 }
 
@@ -1699,7 +1857,8 @@ function saveProgress() {
         dumplingDollars,
         placedItems,
         currentLevel, // Save level
-        speechRate // Save speech rate preference
+        speechRate, // Save speech rate preference
+        questionHistory // Save question attempt history
     };
     localStorage.setItem('dimSumData', JSON.stringify(data));
 }
@@ -1716,6 +1875,7 @@ function loadProgress() {
             placedItems = data.placedItems || [];
             currentLevel = (data.currentLevel !== undefined) ? data.currentLevel : 0; // Load level
             speechRate = (data.speechRate !== undefined) ? data.speechRate : 1.0; // Load rate
+            questionHistory = data.questionHistory || {}; // Load question history
             return true;
         } catch (e) {
             console.error("Save Load Error", e);
@@ -1754,6 +1914,15 @@ function init() {
 
     loadVoices();
     renderSidebar(); // This renders the list but doesn't auto-start
+
+    // Update score displays with loaded values
+    if (hasSave && totalScore > 0) {
+        scoreDisplays.forEach(el => el.textContent = totalScore);
+    }
+    // Update level display
+    if (levelDisplay) {
+        levelDisplay.textContent = currentLevel;
+    }
 
     // Home Button logic
     const homeBtn = document.getElementById('home-btn');
@@ -1843,6 +2012,17 @@ function init() {
             playBong(400, 0.1);
         };
     }
+
+    // Auto-close sidebar on click outside
+    document.addEventListener('click', (e) => {
+        if (sidebar && sidebar.classList.contains('open')) {
+            // Check if click was outside sidebar AND outside the toggle button
+            if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                sidebar.classList.remove('open');
+                playBong(400, 0.1);
+            }
+        }
+    });
 
     // Toggle Mic -> Hold Mic
     if (micBtn) {
@@ -1987,5 +2167,260 @@ function updateStartScreenDesc(level) {
     }
 }
 
+function handleResponsiveLayout() {
+    const leftControls = document.querySelector('.left-controls');
+    const sidebarSettings = document.getElementById('sidebar-settings');
+    const commandBar = document.querySelector('.command-bar');
+
+    if (!leftControls || !sidebarSettings || !commandBar) return;
+
+    if (window.innerWidth <= 640) {
+        if (!sidebarSettings.contains(leftControls)) {
+            sidebarSettings.appendChild(leftControls);
+        }
+    } else {
+        if (!commandBar.contains(leftControls)) {
+            // Re-insert before the mic button
+            const micBtn = document.getElementById('mic-btn');
+            commandBar.insertBefore(leftControls, micBtn);
+        }
+    }
+}
+
 // Start
 init();
+setTimeout(handleResponsiveLayout, 100);
+window.addEventListener('resize', handleResponsiveLayout);
+
+// ========================================================================
+// SCORE HISTORY & PROGRESSION CHART
+// ========================================================================
+
+function showScoreHistory(answer, history) {
+    const modal = document.getElementById('score-history-modal');
+    const titleEl = document.getElementById('history-title');
+    const canvas = document.getElementById('progression-chart');
+    const statsContainer = document.getElementById('history-stats');
+
+    if (!modal || !canvas || !statsContainer) return;
+
+    // Update title
+    titleEl.textContent = `Progress: ${answer.canto}`;
+
+    // Draw chart
+    const ctx = canvas.getContext('2d');
+    drawProgressionChart(ctx, history, canvas.width, canvas.height);
+
+    // Display statistics
+    const stats = calculateStats(history);
+    displayStats(statsContainer, stats);
+
+    // Show modal
+    modal.classList.remove('hidden');
+
+    // Setup close button
+    const closeBtn = document.getElementById('close-history-modal');
+    if (closeBtn) {
+        closeBtn.onclick = () => modal.classList.add('hidden');
+    }
+
+    // Close on background click
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+        }
+    };
+}
+
+function drawProgressionChart(ctx, history, width, height) {
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    const padding = 50;
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 2;
+
+    // Background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw axes
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(padding, padding);
+    ctx.lineTo(padding, height - padding);
+    ctx.lineTo(width - padding, height - padding);
+    ctx.stroke();
+
+    // Y-axis labels (scores)
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '12px Outfit, sans-serif';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 100; i += 25) {
+        const y = height - padding - (i / 100) * chartHeight;
+        ctx.fillText(i.toString(), padding - 10, y + 4);
+
+        // Grid lines
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width - padding, y);
+        ctx.stroke();
+    }
+
+    // X-axis label
+    ctx.textAlign = 'center';
+    ctx.fillText('Attempts', width / 2, height - 10);
+
+    // Y-axis label
+    ctx.save();
+    ctx.translate(15, height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Score', 0, 0);
+    ctx.restore();
+
+    if (history.length === 0) return;
+
+    // Plot data points
+    const maxScore = 100;
+    const points = history.map((h, i) => ({
+        x: padding + (history.length === 1 ? chartWidth / 2 : (i / (history.length - 1)) * chartWidth),
+        y: height - padding - (h.score / maxScore) * chartHeight,
+        score: h.score
+    }));
+
+    // Draw line connecting points
+    if (points.length > 1) {
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        points.forEach((p, i) => {
+            if (i === 0) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
+        });
+        ctx.stroke();
+    }
+
+    // Draw points and labels
+    points.forEach((p, i) => {
+        // Point circle
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Inner highlight
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Score label above point
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px Outfit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(p.score.toString(), p.x, p.y - 15);
+
+        // Attempt number below
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px Outfit, sans-serif';
+        ctx.fillText(`#${i + 1}`, p.x, height - padding + 20);
+    });
+}
+
+function calculateStats(history) {
+    const scores = history.map(h => h.score);
+    const average = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    const best = Math.max(...scores);
+    const latest = scores[scores.length - 1];
+    const improvement = scores.length > 1 ? latest - scores[0] : 0;
+
+    return {
+        attempts: history.length,
+        average,
+        best,
+        latest,
+        improvement
+    };
+}
+
+function displayStats(container, stats) {
+    container.innerHTML = `
+        <div class="stat-card">
+            <div class="stat-label">Attempts</div>
+            <div class="stat-value">${stats.attempts}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Average</div>
+            <div class="stat-value">${stats.average}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Best</div>
+            <div class="stat-value">${stats.best}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Latest</div>
+            <div class="stat-value">${stats.latest}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Progress</div>
+            <div class="stat-value ${stats.improvement > 0 ? 'positive' : stats.improvement < 0 ? 'negative' : ''}">${stats.improvement > 0 ? '+' : ''}${stats.improvement}</div>
+        </div>
+    `;
+}
+
+// Show progress history list for current round
+function showProgressHistoryList() {
+    const modal = document.getElementById('score-history-modal');
+    const titleEl = document.getElementById('history-title');
+    const canvas = document.getElementById('progression-chart');
+    const statsContainer = document.getElementById('history-stats');
+
+    if (!modal || !statsContainer) return;
+
+    // Hide canvas, show list instead
+    if (canvas) canvas.style.display = 'none';
+
+    titleEl.textContent = 'Question Progress History';
+
+    // Build list of questions with history
+    let listHTML = '<div class="history-list">';
+    currentRound.answers.forEach(ans => {
+        const questionKey = `${currentRound.id}_ans_${ans.id}`;
+        const history = questionHistory[questionKey];
+
+        if (history && history.length > 0) {
+            const latest = history[history.length - 1].score;
+            const attempts = history.length;
+            listHTML += `
+                <button class="history-list-item" onclick="showScoreHistory({canto: '${ans.canto}', pinyin: '${ans.pinyin}', english: '${ans.english}'}, questionHistory['${questionKey}'])">
+                    <div class="history-item-text">
+                        <div class="history-item-chinese">${ans.canto}</div>
+                        <div class="history-item-english">${ans.english}</div>
+                    </div>
+                    <div class="history-item-stats">
+                        <div class="history-item-score">${latest}</div>
+                        <div class="history-item-attempts">${attempts} attempt${attempts > 1 ? 's' : ''}</div>
+                    </div>
+                </button>
+            `;
+        }
+    });
+    listHTML += '</div>';
+
+    statsContainer.innerHTML = listHTML;
+    modal.classList.remove('hidden');
+
+    const closeBtn = document.getElementById('close-history-modal');
+    if (closeBtn) {
+        closeBtn.onclick = () => modal.classList.add('hidden');
+    }
+
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+        }
+    };
+}

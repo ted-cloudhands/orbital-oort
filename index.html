@@ -10,7 +10,9 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
 
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥟</text></svg>">
@@ -175,6 +177,8 @@
                     <!-- Topics injected here -->
                 </nav>
             </div>
+            <!-- Mobile Settings - Command bar toggles move here -->
+            <div id="sidebar-settings" class="sidebar-settings"></div>
         </aside>
 
         <!-- Right Panel: Game Board -->
@@ -237,8 +241,24 @@
                         <span class="score-label">LEVEL</span>
                         <span id="current-level-display" class="level-display">0</span>
                     </div>
-                    <div class="score-label">TOTAL</div>
-                    <div class="total-score-display score-digits">0</div>
+
+                    <!-- Round Score -->
+                    <div class="score-section round-score-section">
+                        <div class="score-icon">🥟</div>
+                        <div class="score-info">
+                            <div class="score-label">THIS ROUND</div>
+                            <div id="current-round-display" class="score-value round-score-value">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Total Score -->
+                    <div class="score-section total-score-section">
+                        <div class="score-icon">🏆</div>
+                        <div class="score-info">
+                            <div class="score-label">LIFETIME</div>
+                            <div class="total-score-display score-value">0</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -283,11 +303,21 @@
                     </div>
 
                     <div class="exchange-section">
-                        <div class="exchange-rate">Rate: 100 Pts = 1 🥟</div>
+                        <div class="exchange-rate">Rate: 10 Pts = 1 🥟</div>
                         <div class="exchange-controls">
                             <div class="score-source">Score: <span id="shop-score-val">0</span></div>
-                            <button id="convert-btn" class="action-btn">Convert 100 Pts</button>
+                            <button id="convert-btn" class="action-btn">Convert 10 Pts</button>
                         </div>
+                    </div>
+
+                    <!-- NEW: Tab Navigation -->
+                    <div class="shop-tabs">
+                        <button class="shop-tab active" data-category="steamed">🥟 Steamed</button>
+                        <button class="shop-tab" data-category="fried">🍤 Fried</button>
+                        <button class="shop-tab" data-category="baked">🥐 Baked</button>
+                        <button class="shop-tab" data-category="rice-noodles">🍜 Rice & Noodles</button>
+                        <button class="shop-tab" data-category="desserts">🍮 Desserts</button>
+                        <button class="shop-tab" data-category="drinks">🍵 Drinks</button>
                     </div>
 
                     <div class="shop-grid" id="shop-grid">
@@ -346,7 +376,11 @@
                     </p>
 
                     <div class="summary-actions"
-                        style="display:flex; gap:1rem; justify-content:center; margin-top: 2rem;">
+                        style="display:flex; gap:1rem; justify-content:center; margin-top: 2rem; flex-wrap: wrap;">
+                        <button id="view-history-btn" class="history-btn" onclick="showProgressHistoryList()"
+                            style="display: none;">
+                            📊 View Progress
+                        </button>
                         <button id="next-round-btn" class="start-btn">
                             Next Course 🥟
                             <div class="btn-glow"></div>
@@ -358,79 +392,113 @@
                 </div>
             </div>
 
+            <!-- Score History Modal -->
+            <div id="score-history-modal" class="modal-overlay hidden">
+                <div class="modal-content history-modal">
+                    <div class="modal-header">
+                        <h2 id="history-title">Your Progress</h2>
+                        <button id="close-history-modal" class="close-btn">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <canvas id="progression-chart" width="600" height="300"></canvas>
+                        <div id="history-stats" class="history-stats">
+                            <!-- Stats injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- NEW: Host Avatar (Bottom Right) -->
             <div class="avatar-container host-mode">
                 <div class="avatar" id="host-avatar">
                     <svg viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg">
                         <defs>
                             <linearGradient id="skinHost" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" style="stop-color:#fce4d6;stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:#eac0a5;stop-opacity:1" />
+                                <stop offset="0%" style="stop-color:#ffe8d6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#ffd4b5;stop-opacity:1" />
                             </linearGradient>
                             <radialGradient id="pearl" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
                                 <stop offset="0%" style="stop-color:#ffffff" />
                                 <stop offset="100%" style="stop-color:#e2e8f0" />
                             </radialGradient>
+
                         </defs>
 
-                        <!-- Body/Dress -->
-                        <path d="M60,280 C60,200 180,200 180,280 L180,320 L60,320 Z" fill="#8b5cf6" />
-                        <path d="M90,280 L150,280 L150,320 L90,320 Z" fill="#7c3aed" opacity="0.3" />
-                        <!-- Center fold -->
+                        <!-- Body/Dress (More vibrant purple) -->
+                        <path d="M60,280 C60,200 180,200 180,280 L180,320 L60,320 Z" fill="#a855f7" />
+                        <path d="M90,280 L150,280 L150,320 L90,320 Z" fill="#9333ea" opacity="0.4" />
 
                         <!-- Neck -->
                         <rect x="105" y="190" width="30" height="40" fill="url(#skinHost)" />
 
-                        <!-- Pearl Necklace -->
+                        <!-- Pearl Necklace (Larger, more prominent) -->
                         <g transform="translate(0, 5)">
-                            <circle cx="120" cy="225" r="8" fill="url(#pearl)" />
-                            <circle cx="105" cy="220" r="8" fill="url(#pearl)" />
-                            <circle cx="135" cy="220" r="8" fill="url(#pearl)" />
-                            <circle cx="92" cy="212" r="7" fill="url(#pearl)" />
-                            <circle cx="148" cy="212" r="7" fill="url(#pearl)" />
+                            <circle cx="120" cy="225" r="9" fill="url(#pearl)" stroke="#e2e8f0" stroke-width="1" />
+                            <circle cx="105" cy="220" r="9" fill="url(#pearl)" stroke="#e2e8f0" stroke-width="1" />
+                            <circle cx="135" cy="220" r="9" fill="url(#pearl)" stroke="#e2e8f0" stroke-width="1" />
+                            <circle cx="92" cy="212" r="8" fill="url(#pearl)" stroke="#e2e8f0" stroke-width="1" />
+                            <circle cx="148" cy="212" r="8" fill="url(#pearl)" stroke="#e2e8f0" stroke-width="1" />
                         </g>
 
-                        <!-- Short Stylish Bob Hair (Back) -->
-                        <!-- Long Black Hair (Back) -->
-                        <path d="M60,80 C40,120 40,250 50,320 L190,320 C200,250 200,120 180,80 C190,80 190,120 170,80"
-                            fill="#1f2937" />
+                        <!-- Back Hair (Voluminous, glossy black) -->
+                        <path d="M60,80 C25,120 25,280 50,320 L190,320 C215,280 215,120 180,80" fill="#1a1a2e" />
+                        <!-- Hair shine -->
+                        <ellipse cx="90" cy="180" rx="15" ry="40" fill="#3d3d5c" opacity="0.4" />
+                        <ellipse cx="150" cy="180" rx="15" ry="40" fill="#3d3d5c" opacity="0.4" />
 
-                        <!-- Face Shape -->
-                        <ellipse cx="120" cy="130" rx="55" ry="65" fill="url(#skinHost)" />
+                        <!-- Face Shape (Rounder, cuter) -->
+                        <ellipse cx="120" cy="135" rx="58" ry="68" fill="url(#skinHost)" />
 
-                        <!-- Cat-Eye Glasses -->
+
+
+                        <!-- Wireframe Glasses with Clear Lenses -->
                         <g class="glasses">
-                            <!-- Left Frame -->
-                            <path d="M75,120 Q80,105 105,115 Q115,120 115,135 Q115,150 95,145 Q75,140 75,120"
-                                fill="rgba(31, 41, 55, 0.2)" stroke="#111" stroke-width="3" />
-                            <!-- Right Frame -->
-                            <path d="M165,120 Q160,105 135,115 Q125,120 125,135 Q125,150 145,145 Q165,140 165,120"
-                                fill="rgba(31, 41, 55, 0.2)" stroke="#111" stroke-width="3" />
-                            <!-- Bridge -->
-                            <path d="M115,130 Q120,128 125,130" fill="none" stroke="#111" stroke-width="3" />
+                            <!-- Left Lens (Clear with subtle tint) -->
+                            <ellipse cx="90" cy="128" rx="22" ry="18" fill="rgba(255, 255, 255, 0.1)" stroke="#6b7280"
+                                stroke-width="2.5" />
+                            <!-- Lens reflection -->
+                            <ellipse cx="85" cy="123" rx="8" ry="6" fill="white" opacity="0.4" />
+
+                            <!-- Right Lens (Clear with subtle tint) -->
+                            <ellipse cx="150" cy="128" rx="22" ry="18" fill="rgba(255, 255, 255, 0.1)" stroke="#6b7280"
+                                stroke-width="2.5" />
+                            <!-- Lens reflection -->
+                            <ellipse cx="145" cy="123" rx="8" ry="6" fill="white" opacity="0.4" />
+
+                            <!-- Bridge (Thin wireframe) -->
+                            <path d="M112,128 L128,128" fill="none" stroke="#6b7280" stroke-width="2" />
+
+                            <!-- Temple arms -->
+                            <path d="M68,128 L60,135" fill="none" stroke="#6b7280" stroke-width="2"
+                                stroke-linecap="round" />
+                            <path d="M172,128 L180,135" fill="none" stroke="#6b7280" stroke-width="2"
+                                stroke-linecap="round" />
                         </g>
 
-                        <!-- Eyes (Beautiful Dark Eyes) -->
+                        <!-- Eyes (Larger, more expressive anime-style) -->
                         <g class="eyes">
-                            <ellipse cx="95" cy="125" rx="8" ry="10" fill="#1f2937" />
-                            <ellipse cx="145" cy="125" rx="8" ry="10" fill="#1f2937" />
-                            <!-- Eye Highlights -->
-                            <circle cx="98" cy="122" r="3" fill="white" opacity="0.7" />
-                            <circle cx="148" cy="122" r="3" fill="white" opacity="0.7" />
+                            <ellipse cx="90" cy="130" rx="9" ry="11" fill="#1a1a2e" />
+                            <ellipse cx="150" cy="130" rx="9" ry="11" fill="#1a1a2e" />
+                            <!-- Large highlights (anime style) -->
+                            <circle cx="93" cy="127" r="4" fill="white" opacity="0.9" />
+                            <circle cx="153" cy="127" r="4" fill="white" opacity="0.9" />
+                            <circle cx="88" cy="132" r="2" fill="white" opacity="0.6" />
+                            <circle cx="148" cy="132" r="2" fill="white" opacity="0.6" />
                         </g>
 
-                        <!-- Mouth -->
-                        <path id="mouth" class="mouth" d="M105,160 Q120,170 135,160" stroke="#be123c" stroke-width="3"
-                            stroke-linecap="round" fill="none" />
+                        <!-- Mouth (Natural, gentle smile) -->
+                        <path id="mouth" d="M100,165 Q120,178 140,165" stroke="#ff1744" stroke-width="3.5"
+                            stroke-linecap="round" fill="none" class="mouth" />
 
-                        <!-- Hair Stylized Bangs -->
-                        <!-- Hair Stylized Bangs (Longer flow) -->
-                        <path d="M70,80 C70,40 170,40 170,80 C170,120 160,160 120,70 C100,100 80,120 70,80"
-                            fill="#1f2937" />
+                        <!-- Front Hair / Bangs (Bouncy, voluminous K-pop style) -->
+                        <path d="M60,85 C50,35 190,35 180,85 C180,135 165,185 120,75 C95,125 70,145 60,85"
+                            fill="#1a1a2e" />
+                        <!-- Bangs highlights -->
+                        <path d="M120,60 C115,45 125,45 120,60" fill="#3d3d5c" opacity="0.5" />
+                        <path d="M100,70 C95,55 105,55 100,70" fill="#3d3d5c" opacity="0.5" />
+                        <path d="M140,70 C135,55 145,55 140,70" fill="#3d3d5c" opacity="0.5" />
 
-                        <!-- Earrings -->
-                        <circle cx="65" cy="140" r="5" fill="#fbbf24" />
-                        <circle cx="175" cy="140" r="5" fill="#fbbf24" />
+
                     </svg>
                 </div>
                 <div class="avatar-bubble" id="avatar-bubble">
@@ -474,12 +542,34 @@
                     <!-- Mic Button (Center Floating) -->
                     <button id="mic-btn" class="mic-button" aria-label="Start Listening">
                         <div class="mic-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                                <line x1="12" y1="19" x2="12" y2="23"></line>
-                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            <!-- Custom Siu Mai Mic SVG -->
+                            <svg width="48" height="60" viewBox="0 0 100 120" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <!-- Bamboo Handle -->
+                                <rect x="42" y="70" width="16" height="45" rx="4" fill="#d97706" />
+                                <rect x="42" y="80" width="16" height="4" fill="#b45309" opacity="0.4" />
+                                <rect x="42" y="100" width="16" height="4" fill="#b45309" opacity="0.4" />
+
+                                <!-- Siu Mai Head (Wrapper) -->
+                                <path
+                                    d="M25,75 L20,35 Q20,25 30,25 L70,25 Q80,25 80,35 L75,75 Q75,85 50,85 Q25,85 25,75"
+                                    fill="#fcd34d" stroke="#f59e0b" stroke-width="4" />
+
+                                <!-- Meat/Top Filler -->
+                                <ellipse cx="50" cy="30" rx="28" ry="12" fill="#fca5a5" />
+
+                                <!-- The Green Pea (The Mic "Grill" but cute) -->
+                                <circle cx="50" cy="30" r="8" fill="#4ade80" stroke="#16a34a" stroke-width="2" />
+
+                                <!-- Cute Face -->
+                                <circle cx="40" cy="55" r="4" fill="#1f2937" class="eye-anim" />
+                                <circle cx="60" cy="55" r="4" fill="#1f2937" class="eye-anim" />
+                                <path d="M46,62 Q50,65 54,62" stroke="#1f2937" stroke-width="2" stroke-linecap="round"
+                                    fill="none" />
+
+                                <!-- Rosy Cheeks -->
+                                <circle cx="32" cy="62" r="5" fill="#fecaca" opacity="0.6" />
+                                <circle cx="68" cy="62" r="5" fill="#fecaca" opacity="0.6" />
                             </svg>
                         </div>
                         <div class="pulse-ring"></div>
