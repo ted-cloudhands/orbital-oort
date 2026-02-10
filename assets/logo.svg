@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 150">
+    <defs>
+        <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#ec4899;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#f97316;stop-opacity:1" />
+        </linearGradient>
+        <filter id="glow">
+            <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+            <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    </defs>
+    
+    <!-- Decorative Circle/Sun behind -->
+    <circle cx="250" cy="75" r="70" fill="#fde68a" opacity="0.2" />
+
+    <!-- Steamer Basket Icon (Left) -->
+    <g transform="translate(20, 25) scale(0.8)">
+        <path d="M10,50 L90,50" stroke="#d97706" stroke-width="2" opacity="0.5"/>
+        <path d="M50,10 L50,90" stroke="#d97706" stroke-width="2" opacity="0.5"/>
+        <circle cx="50" cy="50" r="48" fill="none" stroke="#d97706" stroke-width="3"/>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="#d97706" stroke-width="1" stroke-dasharray="5,5"/>
+        
+        <!-- Dumplings inside -->
+        <circle cx="35" cy="40" r="10" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+        <circle cx="65" cy="40" r="10" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+        <circle cx="50" cy="65" r="10" fill="#fcd34d" stroke="#f59e0b" stroke-width="1"/>
+    </g>
+
+    <!-- Main Text -->
+    <text x="120" y="90" font-family="'Outfit', sans-serif" font-weight="900" font-size="60" fill="url(#textGradient)" filter="url(#glow)" style="font-style: italic;">
+        Dim Sum
+    </text>
+    <text x="120" y="135" font-family="'Outfit', sans-serif" font-weight="900" font-size="40" fill="#a78bfa" letter-spacing="5">
+        MOMMA
+    </text>
+
+    <!-- Wandering Chopsticks (Right) -->
+    <g transform="translate(420, 40) rotate(15)">
+        <rect x="0" y="0" width="80" height="6" rx="2" fill="#78350f" />
+        <rect x="0" y="15" width="80" height="6" rx="2" fill="#78350f" />
+    </g>
+</svg>

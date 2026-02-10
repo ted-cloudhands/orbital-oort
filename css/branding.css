@@ -1,0 +1,193 @@
+/* Logo Styling */
+.logo {
+    max-width: 400px;
+    width: 90%;
+    height: auto;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4));
+    transition: transform 0.3s ease;
+    margin: 1rem 0;
+}
+
+.logo:hover {
+    transform: scale(1.05) rotate(-2deg);
+}
+
+/* Banquet Table Background (Static Image) */
+.banquet-table-bg {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: drop-shadow(-20px -20px 40px rgba(0, 0, 0, 0.5));
+}
+
+/* Adjustments for smaller screens */
+@media (max-width: 768px) {
+    .banquet-table-container {
+        width: 120%;
+        /* Make it huge on mobile */
+        right: -20%;
+        bottom: -15%;
+        transform: rotate(-10deg);
+        opacity: 0.6;
+        /* Fade it out a bit so content is readable */
+    }
+
+    .logo {
+        max-width: 280px;
+    }
+}
+
+/* ------------------------------------------- */
+/* DYNAMIC BANQUET & EMOJIS */
+/* ------------------------------------------- */
+
+.banquet-table-container {
+    position: fixed;
+    bottom: -10%;
+    /* Pull it down so it looks like it's coming from the bottom */
+    right: -10%;
+    /* Pull it to the right */
+    width: 60%;
+    /* Occupy a significant portion of the screen */
+    max-width: 1200px;
+    /* Cap size on very large screens */
+    /* Add height so dynamic positioning works relative to this container */
+    height: 800px;
+    /* Approximate aspect ratio */
+    z-index: -1;
+    pointer-events: none;
+    /* Let clicks pass through */
+    transform: rotate(-15deg);
+    /* Slight angle for dynamism */
+}
+
+/* Background Emoji Animation */
+.dimsum-bg-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    /* Behind everything */
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.floating-dimsum {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    opacity: 0.15;
+    animation: floatUp 15s linear infinite;
+    z-index: -1;
+}
+
+.floating-dimsum svg {
+    width: 100%;
+    height: 100%;
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(110vh) rotate(0deg);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.15;
+    }
+
+    90% {
+        opacity: 0.15;
+    }
+
+    100% {
+        transform: translateY(-10vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Add delays and positions for random feel */
+.floating-dimsum:nth-child(1) {
+    left: 10%;
+    animation-delay: 0s;
+    animation-duration: 18s;
+}
+
+.floating-dimsum:nth-child(2) {
+    left: 25%;
+    animation-delay: 5s;
+    animation-duration: 22s;
+}
+
+.floating-dimsum:nth-child(3) {
+    left: 40%;
+    animation-delay: 2s;
+    animation-duration: 15s;
+}
+
+.floating-dimsum:nth-child(4) {
+    left: 60%;
+    animation-delay: 8s;
+    animation-duration: 20s;
+}
+
+.floating-dimsum:nth-child(5) {
+    left: 75%;
+    animation-delay: 3s;
+    animation-duration: 25s;
+}
+
+.floating-dimsum:nth-child(6) {
+    left: 90%;
+    animation-delay: 12s;
+    animation-duration: 17s;
+}
+
+
+/* Placed Items (Baskets/Loose) */
+.placed-item {
+    position: absolute;
+    transform-origin: center;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
+    transition: all 0.3s ease;
+}
+
+.placed-item svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Hover effects (even though pointer events none on container, the items catch pointer events in game. 
+   Here, container is pointer-events:none. So hover won't work unless we re-enable pointers on items.) */
+.placed-item {
+    pointer-events: auto;
+    /* Allow interaction */
+}
+
+/* Re-enable container if we want items to be clickable */
+.banquet-table-container {
+    pointer-events: none;
+    /* Container passes through */
+}
+
+.placed-item:hover {
+    transform: scale(1.1) !important;
+    /* Override inline rotation on hover - tricky with transform/rotation conflict */
+    /* If rotation set inline, hover scale won't work well without `!important` or specific transform preservation */
+    /* The game uses dedicated drag logic which overrides style. Here it is static. */
+    z-index: 100;
+    filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.4));
+    cursor: grab;
+}
+
+.basket-wrapper {
+    width: 100px;
+    height: 100px;
+}
+
+/* Hide the static image if JS loads */
+.banquet-table-bg.hidden {
+    display: none;
+}

@@ -105,21 +105,21 @@ export const ITEM_ASSETS = {
 
 export const ITEMS = [
     // STEAMED (12 items)
-    { id: 'hargow', name: '蝦餃 Har Gow', price: 8, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.hargow },
-    { id: 'siumai', name: '燒賣 Siu Mai', price: 7, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.siumai },
-    { id: 'bao', name: '叉燒包 Char Siu Bao', price: 6, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.bao },
+    { id: 'hargow', name: '蝦餃 Har Gow', price: 8, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.hargow, fact: "The skin must be translucent, showing the pink shrimp inside. A true test of a chef's skill." },
+    { id: 'siumai', name: '燒賣 Siu Mai', price: 7, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.siumai, fact: "A teahouse staple! Did you know the yellow skin is often made with lye water?" },
+    { id: 'bao', name: '叉燒包 Char Siu Bao', price: 6, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.bao, fact: "The split top is essential! It shows the yeast has worked its magic." },
     { id: 'shrimpdumpling', name: '水晶蝦餃 Crystal Shrimp', price: 9, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.shrimpdumpling },
     { id: 'spareribs', name: '豉汁排骨 Pork Ribs', price: 10, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.spareribs },
     { id: 'beefballs', name: '牛肉球 Beef Balls', price: 8, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.beefballs },
     { id: 'fishballs', name: '魚蛋 Fish Balls', price: 7, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.fishballs },
-    { id: 'chickenfeet', name: '鳳爪 Chicken Feet', price: 9, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.chickenfeet },
+    { id: 'chickenfeet', name: '鳳爪 Chicken Feet', price: 9, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.chickenfeet, fact: "Also known as 'Phoenix Claws'. Don't let the name scare you, they're full of collagen!" },
     { id: 'tripe', name: '金錢肚 Tripe', price: 8, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.tripe },
     { id: 'tarodumpling', name: '芋角 Taro Dumpling', price: 7, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.tarodumpling },
     { id: 'lomaigai', name: '糯米雞 Lo Mai Gai', price: 11, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.lomaigai },
     { id: 'custardpao', name: '奶黃包 Custard Bun', price: 8, category: 'steamed', type: 'dimsum', asset: ITEM_ASSETS.custardpao },
 
     // FRIED (8 items)
-    { id: 'springroll', name: '春卷 Spring Roll', price: 6, category: 'fried', type: 'dimsum', asset: ITEM_ASSETS.springroll },
+    { id: 'springroll', name: '春卷 Spring Roll', price: 6, category: 'fried', type: 'dimsum', asset: ITEM_ASSETS.springroll, fact: "Named because they were originally eaten during the Spring Festival." },
     { id: 'tarocroquette', name: '炸芋角 Taro Croquette', price: 7, category: 'fried', type: 'dimsum', asset: ITEM_ASSETS.tarocroquette },
     { id: 'shrimpballs', name: '炸蝦球 Fried Shrimp Balls', price: 9, category: 'fried', type: 'dimsum', asset: ITEM_ASSETS.shrimpballs },
     { id: 'friedsquid', name: '炸魷魚 Fried Squid', price: 10, category: 'fried', type: 'dimsum', asset: ITEM_ASSETS.friedsquid },
@@ -129,7 +129,7 @@ export const ITEMS = [
     { id: 'turnipcake', name: '芋頭糕 Turnip Cake', price: 7, category: 'fried', type: 'dimsum', asset: ITEM_ASSETS.turnipcake },
 
     // BAKED (6 items)
-    { id: 'eggtart', name: '蛋撻 Egg Tart', price: 5, category: 'baked', type: 'dimsum', asset: ITEM_ASSETS.eggtart },
+    { id: 'eggtart', name: '蛋撻 Egg Tart', price: 5, category: 'baked', type: 'dimsum', asset: ITEM_ASSETS.eggtart, fact: "These evolved from Portuguese custard tarts, adapted by Guangzhou chefs in the 1920s." },
     { id: 'bbqporkbun', name: '叉燒酥 BBQ Pork Bun', price: 7, category: 'baked', type: 'dimsum', asset: ITEM_ASSETS.bbqporkbun },
     { id: 'pineapplebun', name: '菠蘿包 Pineapple Bun', price: 5, category: 'baked', type: 'dimsum', asset: ITEM_ASSETS.pineapplebun },
     { id: 'coconuttart', name: '椰撻 Coconut Tart', price: 6, category: 'baked', type: 'dimsum', asset: ITEM_ASSETS.coconuttart },
@@ -137,8 +137,8 @@ export const ITEMS = [
     { id: 'custardpao', name: '奶黃包 Custard Bun', price: 6, category: 'baked', type: 'dimsum', asset: ITEM_ASSETS.custardpao },
 
     // RICE & NOODLES (8 items)
-    { id: 'cheungfun', name: '腸粉 Cheung Fun', price: 8, category: 'rice-noodles', type: 'dimsum', asset: ITEM_ASSETS.cheungfun },
-    { id: 'congee', name: '粥 Congee', price: 7, category: 'rice-noodles', type: 'dimsum', asset: ITEM_ASSETS.congee },
+    { id: 'cheungfun', name: '腸粉 Cheung Fun', price: 8, category: 'rice-noodles', type: 'dimsum', asset: ITEM_ASSETS.cheungfun, fact: "Made from rice milk, these rolls should be silky smooth." },
+    { id: 'congee', name: '粥 Congee', price: 7, category: 'rice-noodles', type: 'dimsum', asset: ITEM_ASSETS.congee, fact: "Comfort food at its finest. The texture varies from thick porridge to watery soup." },
     { id: 'friedrice', name: '炒飯 Fried Rice', price: 9, category: 'rice-noodles', type: 'dimsum', asset: ITEM_ASSETS.friedrice },
     { id: 'ricenoodles', name: '河粉 Rice Noodles', price: 8, category: 'rice-noodles', type: 'dimsum', asset: ITEM_ASSETS.ricenoodles },
     { id: 'chowmein', name: '炒麵 Chow Mein', price: 9, category: 'rice-noodles', type: 'dimsum', asset: ITEM_ASSETS.chowmein },
@@ -161,7 +161,7 @@ export const ITEMS = [
     { id: 'milktea', name: '奶茶 Milk Tea', price: 4, category: 'drinks', type: 'tableware', asset: ITEM_ASSETS.milktea },
 
     // TABLEWARE (4 items)
-    { id: 'teapot', name: 'Tea Pot', price: 15, category: 'tableware', type: 'tableware', asset: ITEM_ASSETS.teapot },
+    { id: 'teapot', name: 'Tea Pot', price: 15, category: 'tableware', type: 'tableware', asset: ITEM_ASSETS.teapot, fact: "When your pot is empty, leave the lid ajar to signal the waiter for a refill!" },
     { id: 'teacup', name: 'Tea Cup', price: 3, category: 'tableware', type: 'tableware', asset: ITEM_ASSETS.teacup },
     { id: 'plate', name: 'Plate', price: 2, category: 'tableware', type: 'tableware', asset: ITEM_ASSETS.plate },
     { id: 'chopsticks', name: 'Chopsticks', price: 2, category: 'tableware', type: 'tableware', asset: ITEM_ASSETS.chopsticks }

@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dim Sum Momma</title>
+    <meta name="description" content="A friendly Cantonese learning game show!">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- OpenCC for Traditional Chinese Conversion -->
+    <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/cn2t.js"></script>
+
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥟</text></svg>">
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div id="ambient-bg"></div>
+
+    <!-- Start Screen Overlay -->
+    <!-- Start Screen Overlay -->
+    <div id="start-screen">
+        <div class="spotlight-container">
+            <div class="spotlight"></div>
+            <div class="spotlight"></div>
+        </div>
+        <!-- Music Toggle (Moved to corner) -->
+        <button id="music-toggle" class="music-toggle-btn">🎵 OFF</button>
+
+        <div class="start-content">
+            <div class="start-logo">
+                <span class="logo-top">Dim Sum</span>
+                <span class="logo-main">Canto Feud</span>
+            </div>
+
+            <div class="mascot-container">
+                <!-- Big Cute Steamer Basket SVG -->
+                <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"
+                    class="bounce-anim">
+                    <!-- Basket -->
+                    <path d="M40,120 L50,180 Q100,190 150,180 L160,120 Z" fill="#fde68a" stroke="#d97706"
+                        stroke-width="4" />
+                    <path d="M40,140 Q100,150 160,140" fill="none" stroke="#d97706" stroke-width="3" />
+                    <!-- Lid Rim -->
+                    <ellipse cx="100" cy="120" rx="60" ry="15" fill="#fef3c7" stroke="#d97706" stroke-width="4" />
+                    <!-- Buns Peeking Out -->
+                    <circle cx="80" cy="100" r="25" fill="#fff" stroke="#cbd5e1" stroke-width="2" />
+                    <circle cx="120" cy="100" r="25" fill="#fff" stroke="#cbd5e1" stroke-width="2" />
+                    <!-- Cute Faces -->
+                    <circle cx="75" cy="100" r="3" fill="#333" />
+                    <circle cx="85" cy="100" r="3" fill="#333" />
+                    <circle cx="115" cy="100" r="3" fill="#333" />
+                    <circle cx="125" cy="100" r="3" fill="#333" />
+                    <path d="M78,105 Q80,108 82,105" stroke="#333" stroke-width="2" fill="none" />
+                    <path d="M118,105 Q120,108 122,105" stroke="#333" stroke-width="2" fill="none" />
+                    <!-- Steam -->
+                    <path d="M70,60 Q80,40 70,20" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.6"
+                        class="steam-anim" />
+                    <path d="M100,50 Q110,30 100,10" stroke="white" stroke-width="4" stroke-linecap="round"
+                        opacity="0.6" class="steam-anim" style="animation-delay: 0.5s" />
+                    <path d="M130,60 Q140,40 130,20" stroke="white" stroke-width="4" stroke-linecap="round"
+                        opacity="0.6" class="steam-anim" style="animation-delay: 1s" />
+                </svg>
+            </div>
+
+            <p class="start-tagline">She judges your tones. She judges your speed.<br><span
+                    style="color:#fbbf24">Impress her to eat!</span></p>
+
+            <div class="start-explanation">
+                <p>Welcome to <strong>Dim Sum Momma</strong>, the high-stakes dim sum game show where your Cantonese
+                    pronunciation is the key to winning a banquet!</p>
+            </div>
+
+            <!-- Persistence Message -->
+            <div id="welcome-back-msg" class="welcome-back hidden">
+                <p class="wb-title">Welcome back, darling!</p>
+                <p class="career-score">Career Earnings: <span id="career-score-val" class="highlight">0</span></p>
+            </div>
+
+            <!-- Difficulty Selector -->
+            <div class="difficulty-selector">
+                <p class="selector-label">Choose Starting Difficulty</p>
+                <div class="difficulty-options" id="difficulty-options">
+                    <button class="diff-btn active" data-level="0">0</button>
+                    <button class="diff-btn" data-level="1">1</button>
+                    <button class="diff-btn" data-level="2">2</button>
+                    <button class="diff-btn" data-level="3">3</button>
+                    <button class="diff-btn" data-level="4">4</button>
+                    <button class="diff-btn" data-level="5">5</button>
+                    <button class="diff-btn" data-level="6">6</button>
+                    <button class="diff-btn" data-level="7">7</button>
+                    <button class="diff-btn" data-level="8">8</button>
+                    <button class="diff-btn" data-level="9">9</button>
+                    <button class="diff-btn expert" data-level="10">10</button>
+                </div>
+                <p id="difficulty-desc" class="difficulty-desc">Total Novice - Simple greetings</p>
+            </div>
+
+            <button id="start-game-btn" class="start-btn">
+                Start Lunch
+                <div class="btn-glow"></div>
+            </button>
+
+            <!-- New Shop Entry -->
+            <button id="start-shop-btn" class="secondary-btn"
+                style="margin-top: 1rem; border-color: rgba(255,255,255,0.3);">
+                Customize Banquet 🥟
+            </button>
+
+            <p class="start-note">Microphone required • Canto Learning</p>
+        </div>
+    </div>
+    <div class="app-container">
+        <!-- Sidebar Toggle (Floating / Glass) -->
+        <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+
+        <!-- Left Panel: Topics & Controls -->
+        <aside class="sidebar">
+            <button id="sidebar-close" class="sidebar-close-btn" aria-label="Close Menu">×</button>
+            <div class="brand">
+                <div class="sidebar-logo">
+                    <span class="logo-top">Dim Sum</span>
+                    <span class="logo-main">Canto Feud</span>
+                </div>
+                <div class="score-box">
+                    <span class="score-label">SCORE</span>
+                    <span class="total-score-display">0</span>
+                </div>
+            </div>
+
+            <div class="topics-list-container">
+                <div class="sidebar-controls">
+                    <button id="nav-home-btn" class="sidebar-btn active">
+                        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                            <polyline points="9 22 9 12 15 12 15 22" />
+                        </svg>
+                        Game Home
+                    </button>
+                    <button id="view-banquet-btn" class="sidebar-btn banquet-nav-btn">
+                        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="2" y="14" width="20" height="8" rx="2" />
+                            <path d="M6 14V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8" />
+                            <line x1="12" y1="4" x2="12" y2="14" />
+                            <path d="M9 14v-3" stroke-linecap="round" />
+                            <path d="M15 14v-3" stroke-linecap="round" />
+                        </svg>
+                        View Banquet
+                    </button>
+                    <button id="nav-shop-btn" class="sidebar-btn shop-nav-btn">
+                        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <path d="M16 10a4 4 0 0 1-8 0" />
+                        </svg>
+                        Dim Sum Shop
+                    </button>
+                </div>
+                <h3>Select a Round</h3>
+                <nav id="chapter-nav">
+                    <!-- Topics injected here -->
+                </nav>
+            </div>
+            <!-- Mobile Settings - Command bar toggles move here -->
+            <div id="sidebar-settings" class="sidebar-settings"></div>
+        </aside>
+
+        <!-- Right Panel: Game Board -->
+        <main class="content-area">
+
+            <!-- Game Header Area -->
+            <div class="game-header">
+                <!-- Dim Sum Elements -->
+                <div class="dimsum-decor">
+                    <!-- Bao -->
+                    <svg class="dimsum-icon bao" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10,85 Q10,20 50,20 Q90,20 90,85 Q90,95 50,95 Q10,95 10,85" fill="#f8fafc"
+                            stroke="#cbd5e1" stroke-width="3" />
+                        <!-- Pleats -->
+                        <path d="M50,20 Q60,50 50,55 Q40,50 50,20" fill="none" stroke="#e2e8f0" stroke-width="2" />
+                        <path d="M30,25 Q40,50 45,52" fill="none" stroke="#e2e8f0" stroke-width="2" />
+                        <path d="M70,25 Q60,50 55,52" fill="none" stroke="#e2e8f0" stroke-width="2" />
+                        <!-- Face -->
+                        <circle cx="35" cy="70" r="3" fill="#333" />
+                        <circle cx="65" cy="70" r="3" fill="#333" />
+                        <path d="M45,75 Q50,80 55,75" fill="none" stroke="#333" stroke-width="2"
+                            stroke-linecap="round" />
+                        <circle cx="20" cy="75" r="4" fill="#fecaca" opacity="0.6" />
+                        <circle cx="80" cy="75" r="4" fill="#fecaca" opacity="0.6" />
+                    </svg>
+
+                    <!-- Siu Mai -->
+                    <svg class="dimsum-icon siumai" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Wrapper -->
+                        <path d="M20,90 L15,40 Q15,30 25,30 L75,30 Q85,30 85,40 L80,90 Q80,95 50,95 Q20,95 20,90"
+                            fill="#fcd34d" stroke="#f59e0b" stroke-width="3" />
+                        <!-- Meat/Top -->
+                        <ellipse cx="50" cy="35" rx="30" ry="10" fill="#fca5a5" />
+                        <!-- Green Pea -->
+                        <circle cx="50" cy="35" r="6" fill="#4ade80" stroke="#16a34a" stroke-width="1" />
+                        <!-- Face -->
+                        <circle cx="35" cy="65" r="3" fill="#333" />
+                        <circle cx="65" cy="65" r="3" fill="#333" />
+                        <path d="M45,68 Q50,65 55,68" fill="none" stroke="#333" stroke-width="2"
+                            stroke-linecap="round" />
+                    </svg>
+                </div>
+
+                <!-- 0. Game Show Logo -->
+                <div class="game-logo">
+                    <span class="logo-top">Dim Sum</span>
+                    <span class="logo-main">Canto Feud</span>
+                </div>
+
+                <!-- Avatar Moved to Bottom Right -->
+
+                <div class="question-display">
+                    <h2 id="question-text">Loading...</h2>
+                    <p id="question-sub" class="question-sub">...</p>
+                </div>
+
+                <!-- Family Feud Style Scoreboard -->
+                <div class="feud-scoreboard">
+                    <div class="level-box">
+                        <span class="score-label">LEVEL</span>
+                        <span id="current-level-display" class="level-display">0</span>
+                    </div>
+
+                    <!-- Round Score -->
+                    <div class="score-section round-score-section">
+                        <div class="score-icon">🥟</div>
+                        <div class="score-info">
+                            <div class="score-label">THIS ROUND</div>
+                            <div id="current-round-display" class="score-value round-score-value">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Total Score -->
+                    <div class="score-section total-score-section">
+                        <div class="score-icon">🏆</div>
+                        <div class="score-info">
+                            <div class="score-label">LIFETIME</div>
+                            <div class="total-score-display score-value">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Board -->
+            <div class="game-board" id="game-board">
+                <!-- Answer Cards injected here -->
+                <div class="empty-state-board">
+                    <div class="card-slot empty">1</div>
+                    <div class="card-slot empty">2</div>
+                    <div class="card-slot empty">3</div>
+                    <div class="card-slot empty">4</div>
+                    <div class="card-slot empty">5</div>
+                </div>
+            </div>
+
+            <!-- Banquet Area (Hidden by default, shown by toggle) -->
+            <div id="banquet-area" class="banquet-area hidden">
+                <div class="banquet-table">
+                    <!-- Items injected here -->
+                    <div class="table-cloth"></div>
+                </div>
+                <div class="banquet-overlay">
+                    <h2>Mom's Banquet Table</h2>
+                    <p>Spend Dumpling Dollars to decorate!</p>
+                    <button id="close-banquet-btn" class="secondary-btn">Back to Game</button>
+                    <button id="open-shop-btn" class="shop-btn">Open Dim Sum Shop 🥟</button>
+                    <button id="auto-organize-btn" class="secondary-btn" style="margin-left: 10px;">Auto Organize
+                        🪄</button>
+                </div>
+            </div>
+
+            <!-- Shop Modal -->
+            <div id="shop-modal" class="modal-overlay hidden">
+                <div class="modal-content shop-modal">
+                    <div class="shop-header">
+                        <h2>Dim Sum Shop</h2>
+                        <div class="currency-display">
+                            <span class="currency-icon">🥟</span>
+                            <span id="shop-balance">0</span>
+                        </div>
+                        <button id="close-shop-btn" class="close-btn">×</button>
+                    </div>
+
+                    <div class="exchange-section">
+                        <div class="exchange-rate">Rate: 10 Pts = 1 🥟</div>
+                        <div class="exchange-controls">
+                            <div class="score-source">Score: <span id="shop-score-val">0</span></div>
+                            <button id="convert-btn" class="action-btn">Convert 10 Pts</button>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Tab Navigation -->
+                    <div class="shop-tabs">
+                        <button class="shop-tab active" data-category="steamed">🥟 Steamed</button>
+                        <button class="shop-tab" data-category="fried">🍤 Fried</button>
+                        <button class="shop-tab" data-category="baked">🥐 Baked</button>
+                        <button class="shop-tab" data-category="rice-noodles">🍜 Rice & Noodles</button>
+                        <button class="shop-tab" data-category="desserts">🍮 Desserts</button>
+                        <button class="shop-tab" data-category="drinks">🍵 Drinks</button>
+                    </div>
+
+                    <div class="shop-grid" id="shop-grid">
+                        <!-- Items injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Round Summary Screen (New Design) -->
+            <div id="round-summary-screen" class="hidden">
+                <!-- Reusing start-screen styling logic via CSS or by copying classes if they are not ID dominant. 
+                      Actually start-screen uses ID #start-screen for fixed positioning. 
+                      We need to ensure #round-summary-screen has the same styles. -->
+
+                <div class="start-content">
+                    <div class="start-logo">
+                        <span class="logo-top">Dim Sum</span>
+                        <span class="logo-main">Canto Feud</span>
+                    </div>
+
+                    <div class="mascot-container">
+                        <!-- Cute Steamer Basket SVG (Simplified or same) -->
+                        <svg width="150" height="150" viewBox="0 0 200 200" fill="none"
+                            xmlns="http://www.w3.org/2000/svg" class="bounce-anim">
+                            <path d="M40,120 L50,180 Q100,190 150,180 L160,120 Z" fill="#fde68a" stroke="#d97706"
+                                stroke-width="4" />
+                            <path d="M40,140 Q100,150 160,140" fill="none" stroke="#d97706" stroke-width="3" />
+                            <ellipse cx="100" cy="120" rx="60" ry="15" fill="#fef3c7" stroke="#d97706"
+                                stroke-width="4" />
+                            <circle cx="80" cy="100" r="25" fill="#fff" stroke="#cbd5e1" stroke-width="2" />
+                            <circle cx="120" cy="100" r="25" fill="#fff" stroke="#cbd5e1" stroke-width="2" />
+                            <!-- Happy Eyes -->
+                            <path d="M70,95 Q80,85 90,95" stroke="#333" stroke-width="3" fill="none" />
+                            <path d="M110,95 Q120,85 130,95" stroke="#333" stroke-width="3" fill="none" />
+                            <!-- Steam -->
+                            <path d="M100,50 Q110,30 100,10" stroke="white" stroke-width="4" stroke-linecap="round"
+                                opacity="0.6" class="steam-anim" />
+                        </svg>
+                    </div>
+
+                    <h2 style="font-size: 2.5rem; color: #fbbf24; margin: 0;">Round Complete!</h2>
+
+                    <div class="summary-details" style="text-align: center; margin: 1rem 0;">
+                        <p style="font-size: 1.2rem; color: #cbd5e1; margin-bottom: 0.5rem;">Round Score</p>
+                        <div id="round-score-display" class="highlight-score"
+                            style="font-size: 5rem; font-weight: 900; color: white; text-shadow: 0 0 25px rgba(251, 191, 36, 0.6); line-height: 1;">
+                            0
+                        </div>
+                        <p style="font-size: 1rem; color: #94a3b8; margin-top: 1rem;">Total Score: <span
+                                id="summary-total-score">0</span></p>
+                    </div>
+
+                    <p id="round-feedback-text"
+                        style="font-size: 1.1rem; color: #e2e8f0; font-style: italic; max-width: 400px;">
+                        "Not bad, darling. Not bad."
+                    </p>
+
+                    <div class="summary-actions"
+                        style="display:flex; gap:1rem; justify-content:center; margin-top: 2rem; flex-wrap: wrap;">
+                        <button id="view-history-btn" class="history-btn" onclick="showProgressHistoryList()"
+                            style="display: none;">
+                            📊 View Progress
+                        </button>
+                        <button id="next-round-btn" class="start-btn">
+                            Next Course 🥟
+                            <div class="btn-glow"></div>
+                        </button>
+                        <button id="summary-shop-btn" class="secondary-btn">
+                            Visit Shop 🛒
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Score History Modal -->
+            <div id="score-history-modal" class="modal-overlay hidden">
+                <div class="modal-content history-modal">
+                    <div class="modal-header">
+                        <h2 id="history-title">Your Progress</h2>
+                        <button id="close-history-modal" class="close-btn">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <canvas id="progression-chart" width="600" height="300"></canvas>
+                        <div id="history-stats" class="history-stats">
+                            <!-- Stats injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW: Host Avatar (Bottom Right) -->
+            <div class="avatar-container host-mode">
+                <div class="avatar" id="host-avatar">
+                    <svg viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="skinHost" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#ffe8d6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#ffd4b5;stop-opacity:1" />
+                            </linearGradient>
+                            <radialGradient id="pearl" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
+                                <stop offset="0%" style="stop-color:#ffffff" />
+                                <stop offset="100%" style="stop-color:#e2e8f0" />
+                            </radialGradient>
+
+                        </defs>
+
+                        <!-- Body/Dress (More vibrant purple) -->
+                        <path d="M60,280 C60,200 180,200 180,280 L180,320 L60,320 Z" fill="#a855f7" />
+                        <path d="M90,280 L150,280 L150,320 L90,320 Z" fill="#9333ea" opacity="0.4" />
+
+                        <!-- Neck -->
+                        <rect x="105" y="190" width="30" height="40" fill="url(#skinHost)" />
+
+                        <!-- Pearl Necklace (Larger, more prominent) -->
+                        <g transform="translate(0, 5)">
+                            <circle cx="120" cy="225" r="9" fill="url(#pearl)" stroke="#e2e8f0" stroke-width="1" />
+                            <circle cx="105" cy="220" r="9" fill="url(#pearl)" stroke="#e2e8f0" stroke-width="1" />
+                            <circle cx="135" cy="220" r="9" fill="url(#pearl)" stroke="#e2e8f0" stroke-width="1" />
+                            <circle cx="92" cy="212" r="8" fill="url(#pearl)" stroke="#e2e8f0" stroke-width="1" />
+                            <circle cx="148" cy="212" r="8" fill="url(#pearl)" stroke="#e2e8f0" stroke-width="1" />
+                        </g>
+
+                        <!-- Back Hair (Voluminous, glossy black) -->
+                        <path d="M60,80 C25,120 25,280 50,320 L190,320 C215,280 215,120 180,80" fill="#1a1a2e" />
+                        <!-- Hair shine -->
+                        <ellipse cx="90" cy="180" rx="15" ry="40" fill="#3d3d5c" opacity="0.4" />
+                        <ellipse cx="150" cy="180" rx="15" ry="40" fill="#3d3d5c" opacity="0.4" />
+
+                        <!-- Face Shape (Rounder, cuter) -->
+                        <ellipse cx="120" cy="135" rx="58" ry="68" fill="url(#skinHost)" />
+
+
+
+                        <!-- Wireframe Glasses with Clear Lenses -->
+                        <g class="glasses">
+                            <!-- Left Lens (Clear with subtle tint) -->
+                            <ellipse cx="90" cy="128" rx="22" ry="18" fill="rgba(255, 255, 255, 0.1)" stroke="#6b7280"
+                                stroke-width="2.5" />
+                            <!-- Lens reflection -->
+                            <ellipse cx="85" cy="123" rx="8" ry="6" fill="white" opacity="0.4" />
+
+                            <!-- Right Lens (Clear with subtle tint) -->
+                            <ellipse cx="150" cy="128" rx="22" ry="18" fill="rgba(255, 255, 255, 0.1)" stroke="#6b7280"
+                                stroke-width="2.5" />
+                            <!-- Lens reflection -->
+                            <ellipse cx="145" cy="123" rx="8" ry="6" fill="white" opacity="0.4" />
+
+                            <!-- Bridge (Thin wireframe) -->
+                            <path d="M112,128 L128,128" fill="none" stroke="#6b7280" stroke-width="2" />
+
+                            <!-- Temple arms -->
+                            <path d="M68,128 L60,135" fill="none" stroke="#6b7280" stroke-width="2"
+                                stroke-linecap="round" />
+                            <path d="M172,128 L180,135" fill="none" stroke="#6b7280" stroke-width="2"
+                                stroke-linecap="round" />
+                        </g>
+
+                        <!-- Eyes (Larger, more expressive anime-style) -->
+                        <g class="eyes">
+                            <ellipse cx="90" cy="130" rx="9" ry="11" fill="#1a1a2e" />
+                            <ellipse cx="150" cy="130" rx="9" ry="11" fill="#1a1a2e" />
+                            <!-- Large highlights (anime style) -->
+                            <circle cx="93" cy="127" r="4" fill="white" opacity="0.9" />
+                            <circle cx="153" cy="127" r="4" fill="white" opacity="0.9" />
+                            <circle cx="88" cy="132" r="2" fill="white" opacity="0.6" />
+                            <circle cx="148" cy="132" r="2" fill="white" opacity="0.6" />
+                        </g>
+
+                        <!-- Mouth (Natural, gentle smile) -->
+                        <path id="mouth" d="M100,165 Q120,178 140,165" stroke="#ff1744" stroke-width="3.5"
+                            stroke-linecap="round" fill="none" class="mouth" />
+
+                        <!-- Front Hair / Bangs (Bouncy, voluminous K-pop style) -->
+                        <path d="M60,85 C50,35 190,35 180,85 C180,135 165,185 120,75 C95,125 70,145 60,85"
+                            fill="#1a1a2e" />
+                        <!-- Bangs highlights -->
+                        <path d="M120,60 C115,45 125,45 120,60" fill="#3d3d5c" opacity="0.5" />
+                        <path d="M100,70 C95,55 105,55 100,70" fill="#3d3d5c" opacity="0.5" />
+                        <path d="M140,70 C135,55 145,55 140,70" fill="#3d3d5c" opacity="0.5" />
+
+
+                    </svg>
+                </div>
+                <div class="avatar-bubble" id="avatar-bubble">
+                    Welcome, darling!
+                </div>
+            </div>
+
+            <!-- Interaction Controls: Glass Command Bar -->
+            <div class="interaction-zone">
+                <!-- Live Subtitles (Floating above bar) -->
+                <div id="live-subtitle" class="floating-subtitle"></div>
+
+                <div class="command-bar">
+                    <!-- Language Toggle -->
+                    <div class="left-controls">
+                        <div class="lang-toggle">
+                            <span id="lang-label">Cantonese</span>
+                            <label class="switch">
+                                <input type="checkbox" id="lang-switch" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <!-- Speed Toggle -->
+                        <div class="lang-toggle speed-toggle-container">
+                            <span id="speed-label">Rabbit Mode 🐰</span>
+                            <label class="switch">
+                                <input type="checkbox" id="speed-switch">
+                                <span class="slider round slider-green"></span>
+                            </label>
+                        </div>
+                        <!-- Tiger Mom Toggle -->
+                        <div class="lang-toggle tiger-toggle-container" style="margin-left: 1rem;">
+                            <span id="tiger-label">Tiger Mom 🐯</span>
+                            <label class="switch">
+                                <input type="checkbox" id="tiger-switch">
+                                <span class="slider round slider-red"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Mic Button (Center Floating) -->
+                    <button id="mic-btn" class="mic-button" aria-label="Start Listening">
+                        <div class="mic-icon">
+                            <!-- Custom Siu Mai Mic SVG -->
+                            <svg width="48" height="60" viewBox="0 0 100 120" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <!-- Bamboo Handle -->
+                                <rect x="42" y="70" width="16" height="45" rx="4" fill="#d97706" />
+                                <rect x="42" y="80" width="16" height="4" fill="#b45309" opacity="0.4" />
+                                <rect x="42" y="100" width="16" height="4" fill="#b45309" opacity="0.4" />
+
+                                <!-- Siu Mai Head (Wrapper) -->
+                                <path
+                                    d="M25,75 L20,35 Q20,25 30,25 L70,25 Q80,25 80,35 L75,75 Q75,85 50,85 Q25,85 25,75"
+                                    fill="#fcd34d" stroke="#f59e0b" stroke-width="4" />
+
+                                <!-- Meat/Top Filler -->
+                                <ellipse cx="50" cy="30" rx="28" ry="12" fill="#fca5a5" />
+
+                                <!-- The Green Pea (The Mic "Grill" but cute) -->
+                                <circle cx="50" cy="30" r="8" fill="#4ade80" stroke="#16a34a" stroke-width="2" />
+
+                                <!-- Cute Face -->
+                                <circle cx="40" cy="55" r="4" fill="#1f2937" class="eye-anim" />
+                                <circle cx="60" cy="55" r="4" fill="#1f2937" class="eye-anim" />
+                                <path d="M46,62 Q50,65 54,62" stroke="#1f2937" stroke-width="2" stroke-linecap="round"
+                                    fill="none" />
+
+                                <!-- Rosy Cheeks -->
+                                <circle cx="32" cy="62" r="5" fill="#fecaca" opacity="0.6" />
+                                <circle cx="68" cy="62" r="5" fill="#fecaca" opacity="0.6" />
+                            </svg>
+                        </div>
+                        <div class="pulse-ring"></div>
+                    </button>
+
+                    <!-- Status Text -->
+                    <div class="status-container">
+                        <p class="status-text" id="status-text">Click to Speak</p>
+                    </div>
+                </div>
+
+                <!-- Next Button Container (Inject target) -->
+                <div id="next-btn-container" style="position:absolute; right: 0; top: -60px;"></div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+
+</html>

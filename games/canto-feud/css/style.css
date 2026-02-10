@@ -1054,38 +1054,98 @@ body {
 /* -------------------------------------------------------------------------- */
 /* GAME BOARD (3D Grid)                                                      */
 /* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+/* GAME BOARD (3D Grid)                                                      */
+/* -------------------------------------------------------------------------- */
 .game-board {
     flex: 1;
     display: grid;
+    /* Default Layout */
     grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-    /* Increased gap */
-    padding: 1rem 320px 1rem 2rem;
-    /* Reduced horizontal padding */
-    /* Added bottom padding for footer space */
+    grid-template-rows: repeat(2, 1fr);
+
+    gap: 1.5rem;
+    /* Slightly reduced gap */
+    padding: 1rem 320px 2rem 2rem;
+    /* Adjusted right padding for avatar/sidebar */
+
     width: 100%;
-    max-width: none;
-    /* Full width */
-    /* Slightly tighter max width */
+    height: 100%;
+    /* Force fill container */
     margin: 0 auto;
     align-content: stretch;
-    /* Stretch to fill vertical space */
-    grid-template-rows: repeat(2, 1fr);
-    /* Force 2 equal rows */
-    /* Don't stretch vertically weirdly */
     perspective: 1200px;
-    /* Enable 3D space */
-    overflow-y: auto;
-    /* Allow scrolling if content overflows */
-    padding-bottom: 140px;
-    /* Ensure content clears the floating command bar */
+
+    overflow: hidden;
+    /* CRITICAL: Prevent scrolling */
+
+    /* Ensure content clears command bar visually but fit in viewport */
+    padding-bottom: 120px;
 }
 
+/* Dynamic Grids based on Item Count */
+/* 1-2 Items: Big items */
+.game-board[data-card-count="1"],
+.game-board[data-card-count="2"] {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 1fr;
+    align-items: center;
+}
+
+/* 3-4 Items: 2x2 */
+.game-board[data-card-count="3"],
+.game-board[data-card-count="4"] {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+}
+
+/* 5-6 Items: 3x2 */
+.game-board[data-card-count="5"],
+.game-board[data-card-count="6"] {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+}
+
+/* 7-8 Items: 4x2 */
+.game-board[data-card-count="7"],
+.game-board[data-card-count="8"] {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 1rem;
+    /* Tighter gap */
+}
+
+/* 9-10 Items: 5x2 */
+.game-board[data-card-count="9"],
+.game-board[data-card-count="10"] {
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 0.8rem;
+}
+
+/* 11-12 Items: 4x3 */
+.game-board[data-card-count="11"],
+.game-board[data-card-count="12"] {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 0.8rem;
+}
+
+/* Very High Count Fallback */
+.game-board[data-card-count="13"],
+.game-board[data-card-count="14"],
+.game-board[data-card-count="15"],
+.game-board[data-card-count="16"] {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+
 .card-slot {
-    min-height: 220px;
+    min-height: 0;
+    /* Allow shrinking to fit! */
     height: 100%;
-    /* Fill the grid cell */
-    /* Allow growth */
     position: relative;
     transform-style: preserve-3d;
 }
@@ -2263,6 +2323,26 @@ input:checked+.slider:before {
     cursor: grabbing;
 }
 
+/* Basket Visual States */
+.basket-wrapper.basket-dull {
+    filter: grayscale(0.6) opacity(0.8);
+    transition: all 0.3s ease;
+}
+
+.basket-wrapper.basket-full {
+    filter: grayscale(0) opacity(1);
+    transform: scale(1.05);
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    z-index: 10;
+}
+
+.basket-wrapper:hover {
+    z-index: 20 !important;
+    transform: scale(1.1) !important;
+    filter: grayscale(0) opacity(1) !important;
+}
+
 /* Disable interaction in mini mode (handled via JS pointer-events or just masking) */
 .banquet-area:not(.full-mode) .placed-item {
     pointer-events: none;
@@ -3001,6 +3081,7 @@ input:checked+.slider:before {
 .answer-card .answer-score {
     pointer-events: none;
 }
+
 /* History Button on Summary Screen */
 .history-btn {
     background: linear-gradient(135deg, #a78bfa, #7c3aed);
@@ -3083,4 +3164,52 @@ input:checked+.slider:before {
     font-size: 0.75rem;
     color: var(--text-muted);
     margin-top: 0.25rem;
+}
+
+/* AUTOMATIC SCALING FOR DENSE BOARDS */
+/* 7+ Items: Reduce text and padding to ensure fit */
+.game-board[data-card-count="7"] .answer-card,
+.game-board[data-card-count="8"] .answer-card,
+.game-board[data-card-count="9"] .answer-card,
+.game-board[data-card-count="10"] .answer-card {
+    padding: 0.8rem 1rem;
+}
+
+.game-board[data-card-count="7"] .answer-row,
+.game-board[data-card-count="8"] .answer-row,
+.game-board[data-card-count="9"] .answer-row,
+.game-board[data-card-count="10"] .answer-row {
+    font-size: 1.4rem;
+}
+
+.game-board[data-card-count="7"] .answer-row.chinese,
+.game-board[data-card-count="8"] .answer-row.chinese,
+.game-board[data-card-count="9"] .answer-row.chinese,
+.game-board[data-card-count="10"] .answer-row.chinese {
+    font-size: 1.6rem;
+}
+
+/* 11+ Items: Further reduction */
+.game-board[data-card-count="11"] .answer-card,
+.game-board[data-card-count="12"] .answer-card,
+.game-board[data-card-count="13"] .answer-card {
+    padding: 0.5rem 0.8rem;
+    border-radius: 16px;
+    /* Slightly less round */
+}
+
+.game-board[data-card-count="11"] .answer-row,
+.game-board[data-card-count="12"] .answer-row {
+    font-size: 1.1rem;
+}
+
+.game-board[data-card-count="11"] .answer-row.chinese,
+.game-board[data-card-count="12"] .answer-row.chinese {
+    font-size: 1.3rem;
+}
+
+/* Ensure empty slots also respect sizing */
+.game-board[data-card-count="7"] .card-slot.empty,
+.game-board[data-card-count="8"] .card-slot.empty {
+    font-size: 1rem;
 }

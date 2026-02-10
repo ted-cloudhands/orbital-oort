@@ -89,6 +89,17 @@ function loadVoices() {
     }
 }
 
+// OpenCC Converter
+let converter = null;
+try {
+    if (window.OpenCC) {
+        converter = window.OpenCC.Converter({ from: 'cn', to: 'hk' });
+        console.log("OpenCC Converter initialized");
+    }
+} catch (e) {
+    console.error("OpenCC Init Error:", e);
+}
+
 // Sidebar
 function renderSidebar() {
     chapterNav.innerHTML = '';
@@ -375,6 +386,9 @@ function renderBoard() {
     // SHUFFLE answers for display (Random Layout)
     const shuffledAnswers = [...currentRound.answers].sort(() => Math.random() - 0.5);
 
+    // Set count for CSS Layout
+    gameBoard.setAttribute('data-card-count', shuffledAnswers.length);
+
     shuffledAnswers.forEach((ans, index) => {
         const slot = document.createElement('div');
         // ... (rest is same)
@@ -493,7 +507,7 @@ function activateCard(ans) {
         // Show Mic ONLY when done speaking
         if (micBtn) micBtn.classList.remove('hidden');
 
-        statusText.textContent = "Hold Mic to Speak";
+        statusText.textContent = "Click Mic to Speak";
     }, true);
 
     statusText.textContent = "Listen...";
@@ -593,12 +607,12 @@ const FEEDBACK_PHRASES = {
         "You are trying, that is important.", "Almost there!"
     ],
     poor: [
-        "Aiya, try again! Don't be shy.", "Open your mouth wider!",
+        "Aiya, that was close! Don't be shy.", "Open your mouth wider!",
         "Tricky one? Listen to me again.", "Not quite! You can do better.",
         "Don't worry, Cantonese is hard!", "Speak up, darling!",
-        "Almost! Try focusing on the tone.", "A little bit off, try again!",
+        "Almost! Try focusing on the tone.", "A little bit off. You'll get it next time!",
         "Keep practicing! I believe in you.", "Listen carefully and copy me.",
-        "Don't give up! Eat a bun and try again."
+        "Don't give up! Eat a bun and keep fighting."
     ]
 };
 
@@ -625,7 +639,7 @@ const TIGER_FEEDBACK_PHRASES = {
         "What was that? Terrible.", "Aiya! You are dishonoring the family.",
         "Stop mumbling! Speak up!", "No dinner for you tonight.",
         "Did you learn nothing?", "Go study more!",
-        "Hopeless... try again.", "I am closing my eyes in shame.",
+        "Hopeless... absolutely hopeless.", "I am closing my eyes in shame.",
         "Even the dog understands better."
     ]
 };
@@ -916,12 +930,29 @@ function setupSpeechRecognition() {
             // This prevents an empty "Final" result (Conf: 0) from wiping out 
             // a valid "Interim" result we just captured.
             if (currentSessionText.trim().length > 0) {
-                transcriptBuffer = currentSessionText;
+                // Determine if we need to convert (only if Cantonese mode)
+                // Note: recognition.lang might be 'zh-HK' but browser can still return Simplified
+                const isCantoMode = recognition.lang !== 'en-US';
+
+                if (isCantoMode && converter) {
+                    transcriptBuffer = converter(currentSessionText);
+                } else {
+                    transcriptBuffer = currentSessionText;
+                }
 
                 // Visual feedback
                 liveSubtitle.textContent = transcriptBuffer;
                 statusText.textContent = "Listening...";
                 statusText.style.color = '#22d3ee';
+
+                // --- AUTO STOP LOGIC ---
+                // Reset silence timer on every result
+                if (silenceTimer) clearTimeout(silenceTimer);
+                silenceTimer = setTimeout(() => {
+                    console.log("Silence detected, auto-stopping.");
+                    stopListening();
+                }, 1500); // 1.5s of silence = stop
+
             } else {
                 // We received an empty result. Ignore it to preserve our buffer.
                 // This often happens when the browser finalizes a "noise" input.
@@ -975,7 +1006,7 @@ function updateMicUI(listening) {
     }
 
     if (!listening) {
-        statusText.textContent = "Tap Mic to Answer";
+        statusText.textContent = "Click Mic to Answer";
         statusText.style.color = 'var(--text-muted)';
         statusText.style.fontWeight = 'normal';
     }
@@ -992,36 +1023,59 @@ function toggleListening() {
 // function toggleListening() { ... } // DEPRECATED
 
 function startListening() {
-    // PTT: Only start if not already listening
+    // TOGGLE: Start listening
     if (!recognition) return;
     if (isListening) return;
 
-    isListening = true;
-    transcriptBuffer = ""; // Reset buffer
-    updateMicUI(true); // Visuals immediately
+    // 1. Play "Bong" Sound immediately
+    playBong(600, 0.1);
 
-    // Check if already started?
-    try {
-        recognition.start();
-        // playBong(600, 0.1); // DEBUG: Comment out to rule out audio interference
-    } catch (e) {
-        // usually means already started or transient error
-        // console.log("Start error:", e);
-    }
+    // 2. Set UI to "Starting" state
+    statusText.textContent = "Adjusting mic...";
+
+    // 3. Delay recognition start to avoid capturing the "bong"
+    // (Wait 300ms)
+    setTimeout(() => {
+        isListening = true;
+        transcriptBuffer = ""; // Reset buffer
+
+        // Clear old silence timer just in case
+        if (silenceTimer) clearTimeout(silenceTimer);
+
+        updateMicUI(true); // Visuals
+
+        try {
+            recognition.start();
+        } catch (e) {
+            console.log("Start error:", e);
+            isListening = false;
+            updateMicUI(false);
+        }
+    }, 300);
 }
 
 function stopListening() {
-    // PTT: Stop immediately on release
+    // Stop listening
     if (!isListening) return;
 
     isListening = false;
-    // updateMicUI(false); // Do not reset UI immediately, let onend handle it (so we show "Processing...")
+
+    if (silenceTimer) clearTimeout(silenceTimer);
+
+    // updateMicUI(false); // Do not reset UI immediately, let onend handle it
+
+    // Visual feedback for stop
+    const btn = document.getElementById('mic-btn');
+    if (btn) btn.classList.remove('listening');
 
     if (recognition) {
         try {
             recognition.stop();
         } catch (e) { }
-        playBong(400, 0.1);
+        // playBong(400, 0.1); // Only play start bong? Or end bong too? User asked for "bong to indicate listening".
+        // Let's keep end sound distinctive or silent. The user said "bong to indicate listening", implied start.
+        // Let's create a different subtle sound for stop/processing.
+        playDing();
     }
 }
 
@@ -1131,8 +1185,14 @@ function getAccentedPinyin(canto, fallback) {
 function playBong(freq = 500, duration = 0.5) {
     try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-            const ctx = new AudioContext();
+        if (!audioContext && AudioContext) {
+            audioContext = new AudioContext();
+        }
+
+        if (audioContext) {
+            if (audioContext.state === 'suspended') audioContext.resume();
+
+            const ctx = audioContext;
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
 
@@ -1204,7 +1264,7 @@ async function speak(text, showBubble = false, onComplete = null, useUserRate = 
         if (avatarContainer) avatarContainer.classList.remove('speaking');
         ttsActive = false;
         if (onComplete) onComplete();
-        else statusText.textContent = "Tap Mic to Answer";
+        else statusText.textContent = "Click Mic to Answer";
     };
 
     utter.onerror = (e) => {
@@ -1274,8 +1334,14 @@ function playDing() {
     // Simple oscillator beep for reliability
     try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-            const ctx = new AudioContext();
+        if (!audioContext && AudioContext) {
+            audioContext = new AudioContext();
+        }
+
+        if (audioContext) {
+            if (audioContext.state === 'suspended') audioContext.resume();
+
+            const ctx = audioContext;
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.connect(gain);
@@ -1478,22 +1544,109 @@ function buyItem(item, el) {
         updateShopUI();
         saveProgress();
         playDing(); // Cha-ching!
-        speak(`Excellent choice! ${item.name} added to your banquet.`);
+        // speak(`Excellent choice! ${item.name} added to your banquet.`);
+        triggerShopAnnouncer(item);
     } else {
         speak("Aiya! Too expensive. Practice more, earn more!");
     }
 }
 
+// Shop Announcer Logic
+let shopAnnouncementTimer = null;
+let shopAnnouncementQueue = {}; // { itemName: count }
+
+function triggerShopAnnouncer(item) {
+    // 1. Add to queue
+    if (!shopAnnouncementQueue[item.name]) {
+        shopAnnouncementQueue[item.name] = 0;
+    }
+    shopAnnouncementQueue[item.name]++;
+
+    // 2. Clear existing timer
+    if (shopAnnouncementTimer) {
+        clearTimeout(shopAnnouncementTimer);
+    }
+
+    // 3. Set new timer (debounce)
+    shopAnnouncementTimer = setTimeout(() => {
+        const message = generateShopMessage();
+        speak(message);
+
+        // Reset
+        shopAnnouncementQueue = {};
+        shopAnnouncementTimer = null;
+    }, 1000); // 1 second debounce
+}
+
+function generateShopMessage() {
+    const items = Object.keys(shopAnnouncementQueue);
+    if (items.length === 0) return "";
+
+    // Case 1: Single Type of Item
+    if (items.length === 1) {
+        const name = items[0];
+        const count = shopAnnouncementQueue[name];
+        return getShopAnnouncement(name, count);
+    }
+
+    // Case 2: Multiple Types
+    // "A mixture of X, Y and Z! A bold strategy."
+    const totalCount = Object.values(shopAnnouncementQueue).reduce((a, b) => a + b, 0);
+    return `A delicious variety! ${totalCount} new items for the banquet. Impressive!`;
+}
+
+function getShopAnnouncement(name, count) {
+    const item = ITEMS.find(i => i.name === name);
+    const fact = item ? item.fact : null;
+
+    // Chance to show fact if available (70% chance for single items, 30% for multiples)
+    const showFact = fact && (count === 1 ? Math.random() < 0.7 : Math.random() < 0.3);
+
+    if (count === 1) {
+        if (showFact) {
+            return `Excellent choice! ${name}. ${fact}`;
+        }
+        const phrases = [
+            `Excellent choice! ${name} is a classic!`,
+            `Ooh, ${name}! One of my favorites.`,
+            `${name}? You have impeccable taste!`,
+            `Fresh ${name}, coming right up!`,
+            `A single ${name}, handled with care.`
+        ];
+        return phrases[Math.floor(Math.random() * phrases.length)];
+    } else if (count === 2) {
+        if (showFact) return `Double trouble! Two orders of ${name}! ${fact}`;
+        return `Double trouble! Two orders of ${name}!`;
+    } else if (count === 3) {
+        if (showFact) return `A triple threat of ${name}! ${fact}`;
+        return `A triple threat of ${name}! You are hungry!`;
+    } else if (count >= 4) {
+        if (showFact) return `Whoa! A mountain of ${name}! ${count} orders confirmed! ${fact}`;
+        return `Whoa! A mountain of ${name}! ${count} orders confirmed!`;
+    }
+
+    return `${count} ${name}s added.`;
+}
+
 function addDimSumToBasket(item) {
-    // 1. Find a basket with space
-    // Iterate placedItems, find type='basket'
+    // 1. Find a basket with space AND same item type (or empty)
     let targetBasket = null;
 
-    // Search backwards to fill most recent basket first
+    // Search backwards to fill most recent suitable basket first
     for (let i = placedItems.length - 1; i >= 0; i--) {
         if (placedItems[i].type === 'basket' && placedItems[i].contents.length < BASKET_CAPACITY) {
-            targetBasket = placedItems[i];
-            break;
+            // Check content compatibility
+            if (placedItems[i].contents.length === 0) {
+                targetBasket = placedItems[i];
+                break;
+            } else {
+                // Check if existing items match the new item
+                const firstItem = placedItems[i].contents[0];
+                if (firstItem.itemId === item.id) {
+                    targetBasket = placedItems[i];
+                    break;
+                }
+            }
         }
     }
 
@@ -1574,6 +1727,14 @@ function renderBasket(container, basketData) {
     wrapper.style.height = '100px';
     wrapper.style.transform = `rotate(${basketData.rotation}deg)`;
     wrapper.style.cursor = 'grab';
+
+    // Visual State Logic
+    const itemCount = basketData.contents.length;
+    if (itemCount >= BASKET_CAPACITY) {
+        wrapper.classList.add('basket-full');
+    } else {
+        wrapper.classList.add('basket-dull');
+    }
 
     // 1. Render Basket SVG
     const basketSvg = ITEM_ASSETS.basket; // Assuming this exists now
@@ -1689,24 +1850,28 @@ function autoOrganizeBanquet() {
     placedItems = [];
 
     // 3. Re-distribute Dim Sum into Baskets (groups of 3)
-    // Shuffle slightly for variety? Or keep order? Let's shuffle.
-    // allDimSum.sort(() => Math.random() - 0.5);
+    // Sort by Item ID to group identical items
+    allDimSum.sort((a, b) => a.id.localeCompare(b.id));
 
     while (allDimSum.length > 0) {
-        const batch = allDimSum.splice(0, BASKET_CAPACITY);
-        const basket = createBasket();
+        const currentType = allDimSum[0].id;
+        // Get all items of this type
+        const typeBatch = allDimSum.filter(i => i.id === currentType);
+        // Remove them from main list
+        allDimSum = allDimSum.filter(i => i.id !== currentType);
 
-        // We need to position baskets intelligently later. 
-        // For now, let createBasket give random, then we overwrite position.
-
-        batch.forEach(item => {
-            basket.contents.push({
-                itemId: item.id,
-                rotation: Math.random() * 360
+        // Retrieve chunks of BASKET_CAPACITY
+        while (typeBatch.length > 0) {
+            const chunk = typeBatch.splice(0, BASKET_CAPACITY);
+            const basket = createBasket();
+            chunk.forEach(item => {
+                basket.contents.push({
+                    itemId: item.id,
+                    rotation: Math.random() * 360
+                });
             });
-        });
-
-        placedItems.push(basket);
+            placedItems.push(basket);
+        }
     }
 
     // 4. Re-add Tableware
@@ -2031,32 +2196,15 @@ function init() {
         micBtn = newBtn; // Update reference
 
 
-        // MOUSE
-        newBtn.addEventListener('mousedown', (e) => {
-            e.preventDefault(); // prevent focus issues
-            newBtn.classList.add('pressed'); // Force visual feedback
-            startListening();
-        });
-        newBtn.addEventListener('mouseup', () => {
-            newBtn.classList.remove('pressed');
-            stopListening();
-        });
-        newBtn.addEventListener('mouseleave', () => {
-            newBtn.classList.remove('pressed');
-            stopListening();
-        });
-
-        // TOUCH
-        newBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // prevent mouse emulation
-            newBtn.classList.add('pressed'); // Force visual feedback
-            startListening();
-        });
-        newBtn.addEventListener('touchend', (e) => {
+        // CLICK TOGGLE (Replaces Press & Hold)
+        newBtn.onclick = (e) => {
             e.preventDefault();
-            newBtn.classList.remove('pressed');
-            stopListening();
-        });
+            toggleListening();
+        };
+
+        // Remove old hold listeners (Clean up just in case, though replacements wiped them)
+        // No need to add mousedown/mouseup listeners
+
     }
 
 
