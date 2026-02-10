@@ -10,11 +10,11 @@ export const gameData = [
             english: 'After 1, 2, 3, 4, 5 comes?'
         },
         answers: [
-            { id: 1, canto: '六', pinyin: 'Luk', english: 'Six', score: 30 },
-            { id: 2, canto: '七', pinyin: 'Chat', english: 'Seven', score: 25 },
-            { id: 3, canto: '八', pinyin: 'Baat', english: 'Eight', score: 20 },
-            { id: 4, canto: '九', pinyin: 'Gau', english: 'Nine', score: 15 },
-            { id: 5, canto: '十', pinyin: 'Sap', english: 'Ten', score: 10 }
+            { id: 1, canto: '數字六', pinyin: 'Sou Zi Luk', english: 'Number Six', score: 30 },
+            { id: 2, canto: '數字七', pinyin: 'Sou Zi Chat', english: 'Number Seven', score: 25 },
+            { id: 3, canto: '數字八', pinyin: 'Sou Zi Baat', english: 'Number Eight', score: 20 },
+            { id: 4, canto: '數字九', pinyin: 'Sou Zi Gau', english: 'Number Nine', score: 15 },
+            { id: 5, canto: '數字十', pinyin: 'Sou Zi Sap', english: 'Number Ten', score: 10 }
         ]
     },
     {
@@ -27,10 +27,10 @@ export const gameData = [
             english: 'How to answer Yes or No?'
         },
         answers: [
-            { id: 1, canto: '係', pinyin: 'Hai', english: 'Yes / It is', score: 40 },
-            { id: 2, canto: '唔係', pinyin: 'M Hai', english: 'No / It is not', score: 35 },
-            { id: 3, canto: '有', pinyin: 'Yau', english: 'Have', score: 15 },
-            { id: 4, canto: '冇', pinyin: 'Mou', english: 'Don\'t have', score: 10 }
+            { id: 1, canto: '係呀', pinyin: 'Hai Aa', english: 'Yes it is', score: 40 },
+            { id: 2, canto: '唔係呀', pinyin: 'M Hai Aa', english: 'No it is not', score: 35 },
+            { id: 3, canto: '有呀', pinyin: 'Yau Aa', english: 'Have it', score: 15 },
+            { id: 4, canto: '冇呀', pinyin: 'Mou Aa', english: 'Don\'t have it', score: 10 }
         ]
     },
     {
@@ -43,9 +43,9 @@ export const gameData = [
             english: 'Calling self and others?'
         },
         answers: [
-            { id: 1, canto: '我', pinyin: 'Ngo', english: 'I / Me', score: 35 },
-            { id: 2, canto: '你', pinyin: 'Nei', english: 'You', score: 35 },
-            { id: 3, canto: '佢', pinyin: 'Keoi', english: 'He / She / It', score: 30 }
+            { id: 1, canto: '係我', pinyin: 'Hai Ngo', english: 'It is me', score: 35 },
+            { id: 2, canto: '係你', pinyin: 'Hai Nei', english: 'It is you', score: 35 },
+            { id: 3, canto: '係佢', pinyin: 'Hai Keoi', english: 'It is him/her', score: 30 }
         ]
     },
     // --- LEVEL 1: NOVICE (Family, Animals, Time) ---
@@ -77,7 +77,7 @@ export const gameData = [
         },
         answers: [
             { id: 1, canto: '你好嗎？', pinyin: 'Nei Hou Ma?', english: 'How are you?', score: 35 },
-            { id: 2, canto: '早晨！', pinyin: 'Jou San!', english: 'Morning!', score: 30 },
+            { id: 2, canto: '早晨呀', pinyin: 'Jou San Aa', english: 'Good morning', score: 30 },
             { id: 3, canto: '得閒飲茶啦！', pinyin: 'Dak Haan Yam Cha La!', english: 'Lets grab tea sometime!', score: 20 },
             { id: 4, canto: '拜拜！', pinyin: 'Baai Baai!', english: 'Bye bye!', score: 15 }
         ]
@@ -92,11 +92,11 @@ export const gameData = [
             english: 'What is your favorite color?'
         },
         answers: [
-            { id: 1, canto: '紅色', pinyin: 'Hung Sik', english: 'Red', score: 30 },
-            { id: 2, canto: '藍色', pinyin: 'Laam Sik', english: 'Blue', score: 25 },
-            { id: 3, canto: '白色', pinyin: 'Baak Sik', english: 'White', score: 20 },
-            { id: 4, canto: '黑色', pinyin: 'Hak Sik', english: 'Black', score: 15 },
-            { id: 5, canto: '黃色', pinyin: 'Wong Sik', english: 'Yellow', score: 10 }
+            { id: 1, canto: '係紅色', pinyin: 'Hai Hung Sik', english: 'It is red', score: 30 },
+            { id: 2, canto: '係藍色', pinyin: 'Hai Laam Sik', english: 'It is blue', score: 25 },
+            { id: 3, canto: '係白色', pinyin: 'Hai Baak Sik', english: 'It is white', score: 20 },
+            { id: 4, canto: '係黑色', pinyin: 'Hai Hak Sik', english: 'It is black', score: 15 },
+            { id: 5, canto: '係黃色', pinyin: 'Hai Wong Sik', english: 'It is yellow', score: 10 }
         ]
     },
     {
@@ -109,10 +109,10 @@ export const gameData = [
             english: 'What is in your bag?'
         },
         answers: [
-            { id: 1, canto: '電話', pinyin: 'Din Waa', english: 'Phone', score: 35 },
-            { id: 2, canto: '鎖匙', pinyin: 'So Si', english: 'Keys', score: 25 },
-            { id: 3, canto: '銀包', pinyin: 'Ngan Baau', english: 'Wallet', score: 25 },
-            { id: 4, canto: '雨遮', pinyin: 'Yu Ze', english: 'Umbrella', score: 15 }
+            { id: 1, canto: '一部電話', pinyin: 'Yat Bou Din Waa', english: 'A phone', score: 35 },
+            { id: 2, canto: '一條鎖匙', pinyin: 'Yat Tiu So Si', english: 'A key', score: 25 },
+            { id: 3, canto: '一個銀包', pinyin: 'Yat Go Ngan Baau', english: 'A wallet', score: 25 },
+            { id: 4, canto: '一把雨遮', pinyin: 'Yat Baa Yu Ze', english: 'An umbrella', score: 15 }
         ]
     },
     // --- LEVEL 2: BEGINNER (Dim Sum, Directions, Weather) ---
@@ -128,8 +128,8 @@ export const gameData = [
         answers: [
             { id: 1, canto: '蝦餃燒賣', pinyin: 'Hargow Siumai', english: 'Shrimp & Pork Dumplings', score: 40 },
             { id: 2, canto: '叉燒包', pinyin: 'Cha Siu Bao', english: 'BBQ Pork Buns', score: 25 },
-            { id: 3, canto: '腸粉', pinyin: 'Cheung Fan', english: 'Rice Rolls', score: 20 },
-            { id: 4, canto: '鳳爪', pinyin: 'Fung Jaau', english: 'Chicken Feet', score: 10 },
+            { id: 3, canto: '一份腸粉', pinyin: 'Yat Fan Cheung Fan', english: 'A portion of rice rolls', score: 20 },
+            { id: 4, canto: '一碟鳳爪', pinyin: 'Yat Dip Fung Jaau', english: 'A plate of chicken feet', score: 10 },
             { id: 5, canto: '普洱茶', pinyin: 'Po Lei Cha', english: 'Pu\'er Tea', score: 5 }
         ]
     },
@@ -145,8 +145,8 @@ export const gameData = [
         answers: [
             { id: 1, canto: '凍檸茶', pinyin: 'Dung Ning Cha', english: 'Iced Lemon Tea', score: 40 },
             { id: 2, canto: '熱奶茶', pinyin: 'Yit Naai Cha', english: 'Hot Milk Tea', score: 30 },
-            { id: 3, canto: '鴛鴦', pinyin: 'Yuen Yeung', english: 'Coffee with Tea', score: 20 },
-            { id: 4, canto: '可樂', pinyin: 'Ho Lok', english: 'Coke', score: 10 }
+            { id: 3, canto: '一杯鴛鴦', pinyin: 'Yat Bui Yuen Yeung', english: 'A cup of Coffee with Tea', score: 20 },
+            { id: 4, canto: '一枝可樂', pinyin: 'Yat Zi Ho Lok', english: 'A bottle of Coke', score: 10 }
         ]
     },
     {
@@ -159,10 +159,10 @@ export const gameData = [
             english: 'How is the weather?'
         },
         answers: [
-            { id: 1, canto: '好熱', pinyin: 'Hou Yit', english: 'Very hot', score: 30 },
-            { id: 2, canto: '落雨', pinyin: 'Lok Yu', english: 'Raining', score: 30 },
-            { id: 3, canto: '好凍', pinyin: 'Hou Dung', english: 'Very cold', score: 20 },
-            { id: 4, canto: '多雲', pinyin: 'Do Wan', english: 'Cloudy', score: 20 }
+            { id: 1, canto: '好熱呀', pinyin: 'Hou Yit Aa', english: 'It is very hot', score: 30 },
+            { id: 2, canto: '落雨呀', pinyin: 'Lok Yu Aa', english: 'It is raining', score: 30 },
+            { id: 3, canto: '好凍呀', pinyin: 'Hou Dung Aa', english: 'It is very cold', score: 20 },
+            { id: 4, canto: '多雲呀', pinyin: 'Do Wan Aa', english: 'It is cloudy', score: 20 }
         ]
     },
     {
@@ -192,9 +192,9 @@ export const gameData = [
         },
         answers: [
             { id: 1, canto: '前面有落', pinyin: 'Cin Min Yau Lok', english: 'Stop in front', score: 40 },
-            { id: 2, canto: '轉左', pinyin: 'Zyun Zo', english: 'Turn left', score: 25 },
-            { id: 3, canto: '轉右', pinyin: 'Zyun Yau', english: 'Turn right', score: 25 },
-            { id: 4, canto: '直行', pinyin: 'Zik Haang', english: 'Go straight', score: 10 }
+            { id: 2, canto: '向左轉', pinyin: 'Heung Zo Zyun', english: 'Turn left', score: 25 },
+            { id: 3, canto: '向右轉', pinyin: 'Heung Yau Zyun', english: 'Turn right', score: 25 },
+            { id: 4, canto: '一路直行', pinyin: 'Yat Lou Zik Haang', english: 'Go straight all the way', score: 10 }
         ]
     },
     {
@@ -224,9 +224,9 @@ export const gameData = [
         },
         answers: [
             { id: 1, canto: '我去行山', pinyin: 'Ngo Heoi Haang Saan', english: 'I go hiking', score: 30 },
-            { id: 2, canto: '睇戲', pinyin: 'Tai Hei', english: 'Watch movies', score: 25 },
-            { id: 3, canto: '打機', pinyin: 'Daa Gei', english: 'Play video games', score: 25 },
-            { id: 4, canto: '瞓覺', pinyin: 'Fan Gaau', english: 'Sleep', score: 20 }
+            { id: 2, canto: '去睇戲', pinyin: 'Heoi Tai Hei', english: 'Go watch movies', score: 25 },
+            { id: 3, canto: '去打機', pinyin: 'Heoi Daa Gei', english: 'Go play video games', score: 25 },
+            { id: 4, canto: '去瞓覺', pinyin: 'Heoi Fan Gaau', english: 'Go sleep', score: 20 }
         ]
     },
     {
@@ -239,10 +239,10 @@ export const gameData = [
             english: 'Where do you want to go?'
         },
         answers: [
-            { id: 1, canto: '旺角', pinyin: 'Wong Kok', english: 'Mong Kok', score: 30 },
-            { id: 2, canto: '銅鑼灣', pinyin: 'Tung Lo Wan', english: 'Causeway Bay', score: 25 },
-            { id: 3, canto: '尖沙咀', pinyin: 'Zim Sa Zeoi', english: 'Tsim Sha Tsui', score: 25 },
-            { id: 4, canto: '中環', pinyin: 'Zung Waan', english: 'Central', score: 20 }
+            { id: 1, canto: '去旺角', pinyin: 'Heoi Wong Kok', english: 'Go to Mong Kok', score: 30 },
+            { id: 2, canto: '去銅鑼灣', pinyin: 'Heoi Tung Lo Wan', english: 'Go to Causeway Bay', score: 25 },
+            { id: 3, canto: '去尖沙咀', pinyin: 'Heoi Zim Sa Zeoi', english: 'Go to Tsim Sha Tsui', score: 25 },
+            { id: 4, canto: '去中環', pinyin: 'Heoi Zung Waan', english: 'Go to Central', score: 20 }
         ]
     },
     // --- LEVEL 4: CONVERSATIONAL (Romance, Emotions, Plans) ---
@@ -257,8 +257,8 @@ export const gameData = [
         },
         answers: [
             { id: 1, canto: '我好鍾意你', pinyin: 'Ngo Hou Zung Yi Nei', english: 'I really like you', score: 40 },
-            { id: 2, canto: '掛住你', pinyin: 'Gwa Jyu Nei', english: 'Miss you', score: 30 },
-            { id: 3, canto: '嫁俾我', pinyin: 'Gaa Bei Ngo', english: 'Marry me', score: 20 },
+            { id: 2, canto: '好掛住你', pinyin: 'Hou Gwa Jyu Nei', english: 'Miss you so much', score: 30 },
+            { id: 3, canto: '嫁俾我啦', pinyin: 'Gaa Bei Ngo Laa', english: 'Marry me please', score: 20 },
             { id: 4, canto: '一生一世', pinyin: 'Yat Sang Yat Sai', english: 'Forever', score: 10 }
         ]
     },
@@ -272,9 +272,9 @@ export const gameData = [
             english: 'How are you feeling today?'
         },
         answers: [
-            { id: 1, canto: '好開心', pinyin: 'Hou Hoi Sam', english: 'Very happy', score: 30 },
-            { id: 2, canto: '好攰', pinyin: 'Hou Gui', english: 'Very tired', score: 30 },
-            { id: 3, canto: '好悶', pinyin: 'Hou Mun', english: 'Very bored', score: 20 },
+            { id: 1, canto: '好開心呀', pinyin: 'Hou Hoi Sam Aa', english: 'Very happy indeed', score: 30 },
+            { id: 2, canto: '好攰呀', pinyin: 'Hou Gui Aa', english: 'Very tired indeed', score: 30 },
+            { id: 3, canto: '好悶呀', pinyin: 'Hou Mun Aa', english: 'Very bored indeed', score: 20 },
             { id: 4, canto: '嬲死我', pinyin: 'Nau Sei Ngo', english: 'So angry', score: 20 }
         ]
     },
@@ -305,10 +305,10 @@ export const gameData = [
             english: 'Internet slang/phrases?'
         },
         answers: [
-            { id: 1, canto: '笑死', pinyin: 'Siu Sei', english: 'LOL (Laugh Die)', score: 35 },
-            { id: 2, canto: '世一', pinyin: 'Sai Yat', english: 'World No. 1 (GOAT)', score: 30 },
-            { id: 3, canto: '自肥', pinyin: 'Zi Fei', english: 'Self-enrichment', score: 20 },
-            { id: 4, canto: '潛水', pinyin: 'Cim Seoi', english: 'Lurking / MIA', score: 15 }
+            { id: 1, canto: '笑死我', pinyin: 'Siu Sei Ngo', english: 'LOL (Laugh Me to Death)', score: 35 },
+            { id: 2, canto: '佢係世一', pinyin: 'Keoi Hai Sai Yat', english: 'He is world no. 1', score: 30 },
+            { id: 3, canto: '自肥計劃', pinyin: 'Zi Fei Gai Waak', english: 'Self-enrichment plan', score: 20 },
+            { id: 4, canto: '潛咗水呀', pinyin: 'Cim Zo Seoi Aa', english: 'Went MIA', score: 15 }
         ]
     },
     {
@@ -321,10 +321,10 @@ export const gameData = [
             english: 'Describing attractive people?'
         },
         answers: [
-            { id: 1, canto: '好索', pinyin: 'Hou Sok', english: 'Variable Hot', score: 35 },
-            { id: 2, canto: '男神', pinyin: 'Naam San', english: 'Male God (Idol)', score: 25 },
-            { id: 3, canto: '女神', pinyin: 'Neoi San', english: 'Goddess', score: 25 },
-            { id: 4, canto: '放閃', pinyin: 'Fong Sim', english: 'PDA (Flash blind)', score: 15 }
+            { id: 1, canto: '佢好索呀', pinyin: 'Keoi Hou Sok Aa', english: 'She is so hot', score: 35 },
+            { id: 2, canto: '係我男神', pinyin: 'Hai Ngo Naam San', english: 'He is my male god', score: 25 },
+            { id: 3, canto: '係我女神', pinyin: 'Hai Ngo Neoi San', english: 'She is my goddess', score: 25 },
+            { id: 4, canto: '喺度放閃', pinyin: 'Hei Dou Fong Sim', english: 'PDA in progress', score: 15 }
         ]
     },
     {
@@ -337,10 +337,10 @@ export const gameData = [
             english: 'Cantonese particles?'
         },
         answers: [
-            { id: 1, canto: '真係㗎？', pinyin: 'Zan Hai Gaa?', english: 'Really?', score: 30 },
+            { id: 1, canto: '真係㗎？', pinyin: 'Zan Hai Gaa?', english: 'Is that really true?', score: 30 },
             { id: 2, canto: '唔係掛？', pinyin: 'M Hai Gwaa?', english: 'You kidding right?', score: 30 },
-            { id: 3, canto: '囉', pinyin: 'Lo', english: 'Lo (Particle)', score: 20 },
-            { id: 4, canto: '啫', pinyin: 'Zek', english: 'Zek (Particle)', score: 20 }
+            { id: 3, canto: '係咁囉', pinyin: 'Hai Gam Lo', english: 'That is just how it is (Lo)', score: 20 },
+            { id: 4, canto: '係咁啫', pinyin: 'Hai Gam Jek', english: 'Just that (Zek)', score: 20 }
         ]
     },
     // --- LEVEL 6: ADVANCED (Work, Complaints, Negotiations) ---
@@ -355,7 +355,7 @@ export const gameData = [
         },
         answers: [
             { id: 1, canto: '做到隻積咁', pinyin: 'Zou Dou Zek Zik Gam', english: 'Working like a dog', score: 35 },
-            { id: 2, canto: '老細又發神經', pinyin: 'Lou Sai Yau Faat San Ging', english: 'Boss going crazy again', score: 30 },
+            { id: 2, canto: '老細發神經', pinyin: 'Lou Sai Faat San Ging', english: 'Boss going crazy', score: 30 },
             { id: 3, canto: '想辭職唔撈', pinyin: 'Seung Ci Zik M Lou', english: 'Want to quit', score: 20 },
             { id: 4, canto: 'OT到天光', pinyin: 'OT Dou Tin Gwong', english: 'Overtime until dawn', score: 15 }
         ]
@@ -371,9 +371,9 @@ export const gameData = [
         },
         answers: [
             { id: 1, canto: '豈有此理', pinyin: 'Hei Yau Ci Lei', english: 'Outrageous', score: 40 },
-            { id: 2, canto: '痴線', pinyin: 'Chi Sin', english: 'Crazy', score: 30 },
+            { id: 2, canto: '痴晒線呀', pinyin: 'Chi Saai Sin Aa', english: 'Totally crazy', score: 30 },
             { id: 3, canto: '有無搞錯', pinyin: 'Yau Mou Gaau Co', english: 'Are you kidding?', score: 20 },
-            { id: 4, canto: '收聲', pinyin: 'Sau Seng', english: 'Shut up', score: 10 }
+            { id: 4, canto: '快啲收聲', pinyin: 'Faai Di Sau Seng', english: 'Shut up now', score: 10 }
         ]
     },
     {
@@ -452,9 +452,9 @@ export const gameData = [
             english: 'Emergency phrases?'
         },
         answers: [
-            { id: 1, canto: '救命呀', pinyin: 'Gau Meng A', english: 'Help!', score: 35 },
-            { id: 2, canto: '叫白車', pinyin: 'Giu Baak Ce', english: 'Call ambulance', score: 30 },
-            { id: 3, canto: '報警', pinyin: 'Bou Ging', english: 'Call police', score: 20 },
+            { id: 1, canto: '救命呀', pinyin: 'Gau Meng Aa', english: 'Help!', score: 35 },
+            { id: 2, canto: '快啲叫白車', pinyin: 'Faai Di Giu Baak Ce', english: 'Call ambulance now', score: 30 },
+            { id: 3, canto: '我要報警', pinyin: 'Ngo Jiu Bou Ging', english: 'I want to call police', score: 20 },
             { id: 4, canto: '唔見咗銀包', pinyin: 'M Gin Zo Ngan Baau', english: 'Lost wallet', score: 15 }
         ]
     },
@@ -469,9 +469,9 @@ export const gameData = [
         },
         answers: [
             { id: 1, canto: '頭暈身㷫', pinyin: 'Tau Wan San Hing', english: 'Dizzy and fever', score: 35 },
-            { id: 2, canto: '肚痛', pinyin: 'Tou Tung', english: 'Stomach ache', score: 25 },
-            { id: 3, canto: '發燒', pinyin: 'Faat Siu', english: 'Fever', score: 25 },
-            { id: 4, canto: '喉嚨痛', pinyin: 'Hau Lung Tung', english: 'Sore throat', score: 15 }
+            { id: 2, canto: '我肚痛呀', pinyin: 'Ngo Tou Tung Aa', english: 'My stomach hurts', score: 25 },
+            { id: 3, canto: '我發燒呀', pinyin: 'Ngo Faat Siu Aa', english: 'I have a fever', score: 25 },
+            { id: 4, canto: '我喉嚨痛', pinyin: 'Ngo Hau Lung Tung', english: 'My throat is sore', score: 15 }
         ]
     },
     {
@@ -485,9 +485,9 @@ export const gameData = [
         },
         answers: [
             { id: 1, canto: '食月餅', pinyin: 'Sik Jyut Beng', english: 'Eat mooncake', score: 35 },
-            { id: 2, canto: '賞月', pinyin: 'Soeng Jyut', english: 'Admire the moon', score: 30 },
+            { id: 2, canto: '一齊賞月', pinyin: 'Yat Cai Soeng Jyut', english: 'Admire the moon together', score: 30 },
             { id: 3, canto: '玩燈籠', pinyin: 'Waan Dang Lung', english: 'Play lanterns', score: 25 },
-            { id: 4, canto: '團圓', pinyin: 'Tyun Jyun', english: 'Reunion', score: 10 }
+            { id: 4, canto: '一家團圓', pinyin: 'Yat Gaa Tyun Jyun', english: 'Family reunion', score: 10 }
         ]
     },
     // --- LEVEL 9: MASTER (Idioms, History) ---
@@ -549,7 +549,7 @@ export const gameData = [
         answers: [
             { id: 1, canto: '人生如夢', pinyin: 'Jan Sang Jyu Mung', english: 'Life is like a dream', score: 50 },
             { id: 2, canto: '難得糊塗', pinyin: 'Naan Dak Wu Tou', english: 'Ignorance is bliss', score: 30 },
-            { id: 3, canto: '順其自然', pinyin: 'Seon Kei Zi Jin', english: 'Let it be', score: 20 }
+            { id: 3, canto: '順其自然啦', pinyin: 'Seon Kei Zi Jin Laa', english: 'Let it be naturally', score: 20 }
         ]
     },
     {
@@ -588,10 +588,10 @@ export const gameData = [
         title: "Simple Verbs (動作)",
         question: { canto: "日常會做咩動作？", pinyin: "Yat Seung Wui Zou Me Dung Zok?", english: "Daily actions?" },
         answers: [
-            { id: 1, canto: "食", pinyin: "Sik", english: "Eat", score: 30 },
-            { id: 2, canto: "飲", pinyin: "Yam", english: "Drink", score: 30 },
-            { id: 3, canto: "瞓", pinyin: "Fan", english: "Sleep", score: 25 },
-            { id: 4, canto: "行", pinyin: "Haang", english: "Walk", score: 15 }
+            { id: 1, canto: "食嘢", pinyin: "Sik Ye", english: "Eat thing", score: 30 },
+            { id: 2, canto: "飲水", pinyin: "Yam Seoi", english: "Drink water", score: 30 },
+            { id: 3, canto: "瞓覺", pinyin: "Fan Gaau", english: "Sleep", score: 25 },
+            { id: 4, canto: "行路", pinyin: "Haang Lou", english: "Walk", score: 15 }
         ]
     }
 ];

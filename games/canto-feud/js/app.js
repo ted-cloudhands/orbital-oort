@@ -1,6 +1,6 @@
 import { gameData } from './chapters.js';
 import { ITEMS, ITEM_ASSETS } from './items.js';
-import { pinyinMap, toPhoneticEnglish } from './pinyinHelper.js';
+import { pinyinMap, toPhoneticEnglish, comparePronunciation } from './pinyinHelper.js';
 import { TTS_CONFIG } from './tts-config.js';
 
 // State
@@ -644,14 +644,24 @@ const TIGER_FEEDBACK_PHRASES = {
     ]
 };
 
-function getFeedback(score) {
+function getFeedback(wordScore, toneScore) {
+    const avg = (wordScore + toneScore) / 2;
     let category = 'poor';
-    if (score >= 90) category = 'perfect';
-    else if (score >= 70) category = 'good';
-    else if (score >= 40) category = 'okay';
+    if (avg >= 90) category = 'perfect';
+    else if (avg >= 70) category = 'good';
+    else if (avg >= 40) category = 'okay';
 
     const phrases = tigerMomMode ? TIGER_FEEDBACK_PHRASES[category] : FEEDBACK_PHRASES[category];
-    return phrases[Math.floor(Math.random() * phrases.length)];
+    let feedback = phrases[Math.floor(Math.random() * phrases.length)];
+
+    // Add specific advice
+    if (wordScore < 80 && wordScore < toneScore) {
+        feedback += tigerMomMode ? " Speak more clearly!" : " Try to pronounce the letters more clearly.";
+    } else if (toneScore < 80 && toneScore < wordScore) {
+        feedback += tigerMomMode ? " Your tones are flat like a pancake!" : " Your tones need a bit more practice.";
+    }
+
+    return feedback;
 }
 
 function handleInput(text) {
@@ -663,112 +673,97 @@ function handleInput(text) {
     const lowerText = text.toLowerCase();
 
     // --- GRANULAR SCORING ENGINE ---
-    let rawScore = 0;
+    let wordAccuracy = 0;
+    let toneAccuracy = 0;
 
-    const targetPinyin = practiceTarget.pinyin.toLowerCase().replace(/[^\w\s]/g, '').split(' ');
     const targetCanto = practiceTarget.canto;
-    const targetEnglish = practiceTarget.english.toLowerCase();
+    const isCantoMode = recognition.lang !== 'en-US';
 
-    // 1. English Mode Handling
-    if (recognition.lang === 'en-US') {
-        // Fuzzy English Match
+    if (!isCantoMode) {
+        // English Mode - word accuracy only, tone is 100% (not applicable)
+        const targetEnglish = practiceTarget.english.toLowerCase();
         if (lowerText.includes(targetEnglish) || targetEnglish.includes(lowerText)) {
-            // Base high score + random variance (95-100)
-            rawScore = 95 + Math.floor(Math.random() * 6);
+            wordAccuracy = 95 + Math.floor(Math.random() * 6);
         } else {
-            // Partial word matches
             const targetWords = targetEnglish.split(' ');
             let wordHits = 0;
             targetWords.forEach(w => {
                 if (w.length > 1 && lowerText.includes(w)) wordHits++;
             });
-            if (wordHits > 0) {
-                rawScore = (wordHits / targetWords.length) * 80;
-                // Add jitter
-                rawScore += Math.floor(Math.random() * 15);
-            }
+            wordAccuracy = (wordHits / targetWords.length) * 100;
         }
-    }
-    // 2. Cantonese Mode Handling
-    else {
-        // B. Cantonese Mode Handling
+        toneAccuracy = 100;
+    } else {
+        // Cantonese Mode
+        let charMatches = 0;
+        let toneMatches = 0;
 
-        let hasCantoChars = /[\u4e00-\u9fa5]/.test(text);
-
-        if (hasCantoChars) {
-            // 1. Scoring based on Chinese Characters
-            let charMatches = 0;
-            // Iterate over Target to find matches (allow out of order? No, usually sequence matters but for simple loose grading:
-            // Let's just count inclusion for now, or match index?
-            // Simple inclusion is safer for "loose" speech recognition
-            for (let char of targetCanto) {
-                if (text.includes(char)) charMatches++;
-            }
-
-            if (targetCanto.length > 0) {
-                const accuracy = charMatches / targetCanto.length;
-                rawScore = accuracy * 95; // Max base 95
-
-                // Bonus for exact length match (prevents extra noise)
-                if (text.length === targetCanto.length) rawScore += 5;
-            }
-
-        } else {
-            // 2. Scoring based on Pinyin (User spoke romanized or recon returned pinyin?)
-            // Usually recon returns Canto chars for zh-HK, but if it returns English-ish text...
-
-            let pinyinMatches = 0;
-            targetPinyin.forEach(p => {
-                // Check for exact pinyin syllable match
-                // We use space tokenizer for targetPinyin
-                if (p.length > 0 && lowerText.includes(p)) pinyinMatches++;
-            });
-
-            if (targetPinyin.length > 0) {
-                const accuracy = pinyinMatches / targetPinyin.length;
-                rawScore = accuracy * 90;
+        // Match characters and check pronunciation
+        for (let char of targetCanto) {
+            if (text.includes(char)) {
+                charMatches++;
+                toneMatches++;
+            } else {
+                let syllableFound = false;
+                let toneFound = false;
+                for (let inputChar of text) {
+                    const comp = comparePronunciation(char, inputChar);
+                    if (comp.syllableMatch) {
+                        syllableFound = true;
+                        if (comp.toneMatch) toneFound = true;
+                    }
+                }
+                if (syllableFound) charMatches += 0.8;
+                if (toneFound) toneMatches += 1;
             }
         }
 
-        // Random jitter (1-5 points) to make it look organic "AI Grading"
-        rawScore += Math.floor(Math.random() * 5);
+        wordAccuracy = (charMatches / targetCanto.length) * 100;
+        toneAccuracy = (toneMatches / targetCanto.length) * 100;
+
+        // Add minimal jitter
+        wordAccuracy += Math.floor(Math.random() * 5);
+        toneAccuracy += Math.floor(Math.random() * 5);
     }
 
     // Clamp
-    if (rawScore > 100) rawScore = 100;
-    if (rawScore < 0) rawScore = 0;
+    wordAccuracy = Math.min(100, Math.max(0, Math.floor(wordAccuracy)));
+    toneAccuracy = Math.min(100, Math.max(0, Math.floor(toneAccuracy)));
 
-    const score = Math.floor(rawScore);
+    const finalScore = Math.floor((wordAccuracy + toneAccuracy) / 2);
 
     // Get Varied Feedback
-    const feedback = getFeedback(score);
-
-    // LOG TO HISTORY - REMOVED
+    const feedback = getFeedback(wordAccuracy, toneAccuracy);
 
     // Speak feedback, then trigger success
     const target = practiceTarget;
-    speak(`${score} points. ${feedback}`, false, () => {
-        success(target, score, text); // Pass text!
+    speak(`${finalScore} points. ${feedback}`, false, () => {
+        success(target, wordAccuracy, toneAccuracy, text);
     });
 
     practiceTarget = null;
 }
 
-function success(answer, grade, spokenText = "") {
+function success(answer, wordScore, toneScore, spokenText = "") {
     revealedAnswers.push(answer.id);
     const card = document.getElementById(`ans-${answer.id}`);
     if (card) {
         card.classList.remove('active-practice');
-
         card.classList.add('completed');
 
         // Hide mic after success
         if (micBtn) micBtn.classList.add('hidden');
 
-
         // UPDATE THE CARD SCORE TO SHOW THE GRADE
         const scoreEl = document.getElementById(`score-${answer.id}`);
-        if (scoreEl) scoreEl.textContent = grade;
+        if (scoreEl) {
+            scoreEl.innerHTML = `
+                <div class="split-score">
+                    <div>W: <span class="score-val">${wordScore}</span></div>
+                    <div>T: <span class="score-val">${toneScore}</span></div>
+                </div>
+            `;
+        }
 
         // SHOW SPOKEN TEXT
         if (spokenText) {
@@ -782,6 +777,8 @@ function success(answer, grade, spokenText = "") {
         }
     }
 
+    const avgScore = Math.floor((wordScore + toneScore) / 2);
+
     // Track question attempt in history
     const questionKey = `${currentRound.id}_ans_${answer.id}`;
     if (!questionHistory[questionKey]) {
@@ -789,21 +786,23 @@ function success(answer, grade, spokenText = "") {
     }
     questionHistory[questionKey].push({
         timestamp: Date.now(),
-        score: grade,
+        score: avgScore,
+        wordScore: wordScore,
+        toneScore: toneScore,
         userInput: spokenText,
-        grade: grade
+        grade: avgScore
     });
 
-    // Use grade directly as points (1-100 score corresponds to quality)
-    const earnedPoints = grade; // Direct mapping per user request
+    // Use avgScore directly as points
+    const earnedPoints = avgScore;
 
     totalScore += earnedPoints;
     currentRoundScore += earnedPoints;
 
     // Bonus for perfect score
-    if (grade >= 95) totalScore += 10;
+    if (avgScore >= 95) totalScore += 10;
 
-    saveProgress(); // Save score update
+    saveProgress();
 
     // Update round score display with pulse animation
     if (roundScoreDisplay) {
@@ -813,18 +812,16 @@ function success(answer, grade, spokenText = "") {
     }
 
     // Animate the score update
-    // Grab current value safely (from first display)
     const currentVal = parseInt(scoreDisplays[0]?.innerText.replace(/[^0-9]/g, '') || '0');
     animateScore(scoreDisplays, currentVal, totalScore, 1000);
 
     // CHECK FOR LEVEL UP!
-    // Level up every 400 points? (Total 4000 for level 10)
     const newLevel = Math.min(10, Math.floor(totalScore / 400));
     if (newLevel > currentLevel) {
         currentLevel = newLevel;
         updateLevelUI();
         speak(`Level Up! You are now level ${currentLevel}. ${DIFFICULTY_DESCS[currentLevel]}`);
-        saveProgress(); // Save level up
+        saveProgress();
     }
 
     playDing();
@@ -832,7 +829,7 @@ function success(answer, grade, spokenText = "") {
     // Auto Advance after a delay to celebrate
     setTimeout(() => {
         activateNextAnswer();
-    }, 2000); // 2 second pause
+    }, 2000);
 }
 
 function animateScore(elements, start, end, duration) {

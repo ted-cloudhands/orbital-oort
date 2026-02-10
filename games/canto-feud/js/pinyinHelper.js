@@ -59,6 +59,87 @@ export const pinyinMap = {
     '道可道非常道': 'dou hó dou fēi sheòng dou', '上善若水': 'seohng sihn yeohk séui'
 };
 
+// Helper for character-level lookup
+export const charPinyinMap = {};
+
+// Initialize character map from existing phrases
+function initCharMap() {
+    Object.entries(pinyinMap).forEach(([phrase, pinyin]) => {
+        const cleanChars = phrase.replace(/[^\u4e00-\u9fa5]/g, '');
+        const syllables = pinyin.split(/\s+/);
+        if (cleanChars.length === syllables.length) {
+            for (let i = 0; i < cleanChars.length; i++) {
+                if (!charPinyinMap[cleanChars[i]]) {
+                    charPinyinMap[cleanChars[i]] = syllables[i];
+                }
+            }
+        }
+    });
+}
+initCharMap();
+
+/**
+ * Extracts the base syllable (lowercase, no tone markers) and the Yale tone number (1-6).
+ * @param {string} yale - The Yale romanized syllable
+ * @returns {object} - { base: string, tone: number }
+ */
+export function getToneAndBase(yale) {
+    if (!yale) return { base: '', tone: 3 };
+
+    let tone = 3; // Default Mid Level
+    const lower = yale.toLowerCase();
+
+    // Check for 'h' tone marker (follows a vowel)
+    const hasH = /([aeiou])h/i.test(yale);
+
+    const hasMacron = /[āēīōūǖ]/.test(yale); // Tone 1
+    const hasAcute = /[áéíóúǘ]/.test(yale);  // Tone 2 or 5
+    const hasGrave = /[àèìòùǜ]/.test(yale);  // Tone 4
+
+    if (hasH) {
+        if (hasGrave) tone = 4;
+        else if (hasAcute) tone = 5;
+        else tone = 6;
+    } else {
+        if (hasMacron) tone = 1;
+        else if (hasAcute) tone = 2;
+        else tone = 3;
+    }
+
+    // Clean base: remove diacritics and tone 'h'
+    let base = lower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (tone >= 4) {
+        base = base.replace(/([aeiou])h/g, '$1');
+    }
+    // Remove punctuation
+    base = base.replace(/[^a-z]/g, '');
+
+    return { base, tone };
+}
+
+/**
+ * Compares two characters based on their Cantonese pronunciation.
+ * @param {string} targetChar - The target character
+ * @param {string} inputChar - The character recognized from speech
+ * @returns {object} - { syllableMatch: boolean, toneMatch: boolean }
+ */
+export function comparePronunciation(targetChar, inputChar) {
+    if (targetChar === inputChar) return { syllableMatch: true, toneMatch: true };
+
+    const targetPinyin = charPinyinMap[targetChar];
+    const inputPinyin = charPinyinMap[inputChar];
+
+    if (!targetPinyin || !inputPinyin) return { syllableMatch: false, toneMatch: false };
+
+    const target = getToneAndBase(targetPinyin);
+    const input = getToneAndBase(inputPinyin);
+
+    return {
+        syllableMatch: target.base === input.base,
+        toneMatch: target.tone === input.tone
+    };
+}
+
 /**
  * Converts Cantonese romanization to phonetic English spelling
  * @param {string} pinyin - The romanized Cantonese text
@@ -102,10 +183,10 @@ export function toPhoneticEnglish(pinyin) {
         'naa': 'nah', 'naam': 'nahm', 'naan': 'nahn', 'nau': 'now', 'nei': 'nay', 'neoi': 'noy', 'ngo': 'naw', 'ngan': 'ngun', 'nging': 'nging', 'nin': 'neen', 'ning': 'ning', 'niu': 'new',
         'paa': 'pah', 'paai': 'pie', 'pang': 'pung', 'pei': 'pay', 'peng': 'pung', 'pin': 'peen', 'po': 'paw',
         'saa': 'sah', 'saai': 'sigh', 'saang': 'sahng', 'saan': 'sahn', 'sai': 'sigh', 'sak': 'suck', 'sam': 'sum', 'san': 'sun', 'sang': 'sung', 'sap': 'sup', 'sau': 'sow', 'se': 'seh', 'sei': 'say', 'sek': 'suck', 'seng': 'sung', 'seoi': 'soy', 'seon': 'sun', 'seong': 'seung', 'seung': 'seung', 'si': 'see', 'sik': 'sick', 'sim': 'seem', 'sin': 'seen', 'sing': 'sing', 'siu': 'see-oo', 'so': 'saw', 'soeng': 'seung', 'sok': 'sock', 'sou': 'so', 'suk': 'sook', 'sung': 'soong', 'syut': 'sewt', 'syu': 'sue',
-        'taa': 'tah', 'taai': 'tie', 'tai': 'tie', 'tau': 'tow', 'teng': 'tung', 'tin': 'teen', 'tit': 'teet', 'tiu': 'tew', 'to': 'taw', 'toi': 'toy', 'tou': 'toe', 'tung': 'toong', 'tyun': 'tewn',
+        'taa': 'tah', 'taai': 'tie', 'tai': 'tie', 'tau': 'tow', 'teng': 'tung', 'teen': 'teen', 'tit': 'teet', 'tiu': 'tew', 'to': 'taw', 'toi': 'toy', 'tou': 'toe', 'tung': 'toong', 'tyun': 'tewn',
         'waa': 'wah', 'waak': 'wock', 'waan': 'wahn', 'wai': 'why', 'wan': 'wun', 'wing': 'wing', 'wong': 'wong', 'wu': 'woo', 'wui': 'wooey', 'wun': 'woon',
         'yaa': 'yah', 'yaau': 'yow', 'yam': 'yum', 'yan': 'yun', 'yang': 'yung', 'yat': 'yut', 'yau': 'yow', 'ye': 'yeh', 'yeh': 'yeh', 'yeoi': 'yoy', 'yeuk': 'yeuk', 'yeung': 'yeung', 'yi': 'yee', 'yik': 'yick', 'yim': 'yeem', 'yin': 'yeen', 'ying': 'ying', 'yip': 'yeep', 'yit': 'yeet', 'yiu': 'yew', 'yo': 'yaw', 'yu': 'yew', 'yue': 'yew-eh', 'yuen': 'yewen', 'yun': 'yewen', 'yut': 'yewt',
-        'za': 'jah', 'zaap': 'jahp', 'zaa': 'jah', 'zaai': 'jie', 'zai': 'jie', 'zam': 'jum', 'zan': 'jun', 'zang': 'jung', 'ze': 'jeh', 'zek': 'jeck', 'zeoi': 'joy', 'zeung': 'jeung', 'zi': 'jee', 'zik': 'jick', 'zim': 'jeem', 'zing': 'jing', 'zit': 'jeet', 'zo': 'jaw', 'zoi': 'joy', 'zok': 'jock', 'zon': 'jawn', 'zou': 'joe', 'zuk': 'jook', 'zung': 'joong', 'zyun': 'jewen'
+        'za': 'jah', 'zaap': 'jahp', 'zaa': 'jah', 'zaai': 'jie', 'zai': 'jie', 'zam': 'jum', 'zan': 'jun', 'zang': 'jung', 'ze': 'jeh', 'zek': 'jeck', 'zeoi': 'joy', 'zeung': 'jeung', 'zi': 'see', 'zik': 'jick', 'zim': 'jeem', 'zing': 'jing', 'zit': 'jeet', 'zo': 'jaw', 'zoi': 'joy', 'zok': 'jock', 'zon': 'jawn', 'zou': 'joe', 'zuk': 'jook', 'zung': 'joong', 'zyun': 'jewen'
     };
 
     // Process the pinyin string

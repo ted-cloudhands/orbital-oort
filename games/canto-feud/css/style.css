@@ -1340,6 +1340,20 @@ body {
     z-index: 2;
 }
 
+.split-score {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.9rem;
+    line-height: 1;
+    text-align: left;
+}
+
+.split-score .score-val {
+    color: var(--accent-gold);
+    font-weight: 900;
+}
+
 
 .user-spoken-text {
     font-size: 0.9rem;
@@ -1597,7 +1611,7 @@ body {
 }
 
 .mic-button:after {
-    content: 'HOLD';
+    content: '';
     position: absolute;
     bottom: -35px;
     left: 50%;
